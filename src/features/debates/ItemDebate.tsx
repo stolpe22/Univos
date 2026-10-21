@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AvatarStack } from "@/components/ui/AvatarStack";
 import { Pill } from "@/components/ui/Card";
-import { formatarDataComDia } from "@/lib/datas";
+import { formatarQuando } from "@/lib/datas";
 import { AcoesDebate } from "./AcoesDebate";
 import { conclusaoMaisVotada, resumirViradas } from "./enquete";
 import { Presenca } from "./Presenca";
@@ -63,7 +63,7 @@ export function InfoDebate({ debate: d }: { debate: Debate }) {
   return (
     <>
       <div className="text-[13.5px] text-muted">
-        {formatarDataComDia(d.data)} · {d.formato}
+        {formatarQuando(d.data, d.comHora)} · {d.formato}
       </div>
       {COMO_FUNCIONA[d.formato] && (
         <div className="text-[13px] text-muted">{COMO_FUNCIONA[d.formato]}</div>

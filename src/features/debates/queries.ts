@@ -29,6 +29,8 @@ export type Debate = {
   id: number;
   tema: string;
   data: string;
+  /** false quando foi marcado só com o dia (sem hora). */
+  comHora: boolean;
   formato: string;
   status: FaseDebate;
   criadoPor: string | null;
@@ -53,7 +55,7 @@ export type ComentarioDebate = {
 type Pessoa = { nome: string; cor: CorPerfil; icone_avatar: IconePerfil | "" } | null;
 
 /** O que cada debate traz junto: presenças, comentaristas, enquetes, votos e conclusões. */
-const CAMPOS_DEBATE = `id, tema, data, formato, status, criado_por,
+const CAMPOS_DEBATE = `id, tema, data, com_hora, formato, status, criado_por,
        presencas(user_id, perfis!presencas_user_id_fkey(nome, cor, icone_avatar)),
        comentarios_debate(user_id, perfis!comentarios_debate_user_id_fkey(nome, cor, icone_avatar)),
        enquetes(id, tipo, pergunta, status, proposta_por, criado_em,
@@ -67,6 +69,7 @@ type Linha = {
   id: number;
   tema: string;
   data: string;
+  com_hora: boolean;
   formato: string;
   status: FaseDebate;
   criado_por: string | null;
@@ -163,6 +166,7 @@ function mapearDebate(d: Linha): Debate {
     id: d.id,
     tema: d.tema,
     data: d.data,
+    comHora: d.com_hora,
     formato: d.formato,
     status: d.status,
     criadoPor: d.criado_por,

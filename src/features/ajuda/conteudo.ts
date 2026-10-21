@@ -109,7 +109,8 @@ export const AJUDA: Record<string, SecaoAjuda> = {
       },
       {
         pergunta: "Como marco um debate?",
-        resposta: "Preencha tema, data e formato em Marcar debate. A data precisa ser no futuro.",
+        resposta:
+          "Preencha o tema e escolha Quando: em Marcar data, informe o dia (de hoje em diante) e, se quiser, a hora; sem hora, vale o dia todo. Em Já está rolando, o debate abre na hora, como em andamento, e fica registrado com a data e a hora de agora. Depois escolha o formato.",
       },
       {
         pergunta: "Como funciona a enquete do debate?",

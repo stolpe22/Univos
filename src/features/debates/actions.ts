@@ -20,7 +20,7 @@ function revalidarDebate(id: number) {
   revalidatePath(`/debates/${id}`);
 }
 
-type CamposDebate = "tema" | "data" | "formato";
+type CamposDebate = "tema" | "quando" | "data" | "hora" | "formato";
 
 /** Marca um debate (data no futuro) e já confirma a presença de quem marcou. */
 export async function marcarDebate(
@@ -29,7 +29,9 @@ export async function marcarDebate(
 ): Promise<EstadoForm<CamposDebate>> {
   const valores = {
     tema: String(form.get("tema") ?? ""),
+    quando: String(form.get("quando") ?? "data"),
     data: String(form.get("data") ?? ""),
+    hora: String(form.get("hora") ?? ""),
     formato: String(form.get("formato") ?? ""),
   };
   const lido = debateSchema().safeParse(valores);
@@ -49,6 +51,9 @@ export async function marcarDebate(
       clube_id: clube.id,
       tema: lido.data.tema,
       data: lido.data.data.toISOString(),
+      com_hora: lido.data.comHora,
+      // "já está rolando": nasce em andamento; senão, marcado
+      status: lido.data.aoVivo ? "ao_vivo" : "agendado",
       formato: lido.data.formato,
     })
     .select("id")
@@ -57,7 +62,11 @@ export async function marcarDebate(
 
   await supabase.from("presencas").insert({ debate_id: data.id });
   revalidar();
-  return { ok: true, mensagem: "Debate marcado.", desfazer: data.id };
+  return {
+    ok: true,
+    mensagem: lido.data.aoVivo ? "Debate aberto: tá rolando agora." : "Debate marcado.",
+    desfazer: data.id,
+  };
 }
 
 /** Desfazer de "Marcar debate". */

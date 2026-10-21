@@ -15,7 +15,7 @@ import { porcentagem } from "@/features/livro/regras";
 import { rotulo } from "@/features/mapa/afirmacoes";
 import { Bussola, Escala } from "@/features/mapa/Bussola";
 import { listarMapaDoGrupo } from "@/features/mapa/queries";
-import { formatarDataComDia } from "@/lib/datas";
+import { formatarQuando } from "@/lib/datas";
 
 async function pessoaDoGrupo(id: string) {
   const clube = await getClubeAtual();
@@ -216,7 +216,9 @@ export default async function PerfilPage({ params }: PageProps<"/membros/[id]">)
                     <Link href={`/debates/${d.id}`} className="font-semibold text-accent underline">
                       {d.tema}
                     </Link>
-                    <div className="text-[13px] text-muted">{formatarDataComDia(d.data)}</div>
+                    <div className="text-[13px] text-muted">
+                      {formatarQuando(d.data, d.comHora)}
+                    </div>
                   </li>
                 ))}
               </ListaRolavel>

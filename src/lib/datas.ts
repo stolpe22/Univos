@@ -21,12 +21,15 @@ export function formatarDataComDia(iso: string) {
   });
 }
 
-/** Valor mínimo para <input type="datetime-local"> (agora, no horário de Brasília). */
-export function agoraLocal() {
-  return new Date()
-    .toLocaleString("sv-SE", { timeZone: "America/Sao_Paulo" })
-    .slice(0, 16)
-    .replace(" ", "T");
+/** Data do debate: com hora ("dom., 26 de out., 20:00") ou só o dia ("dom., 26 de out."). */
+export function formatarQuando(iso: string, comHora: boolean) {
+  if (comHora) return formatarDataComDia(iso);
+  return new Date(iso).toLocaleDateString("pt-BR", {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+    timeZone: "America/Sao_Paulo",
+  });
 }
 
 /** "2026-10-26" (só a data, sem hora) → "segunda-feira, 26 de out." Para prazos. */

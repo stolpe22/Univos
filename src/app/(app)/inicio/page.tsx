@@ -13,7 +13,7 @@ import { MetaLeitura } from "@/features/livro/MetaLeitura";
 import { getLivroAtual, getMetaAtual, listarProgresso } from "@/features/livro/queries";
 import { porcentagem } from "@/features/livro/regras";
 import { getMeuQuiz } from "@/features/mapa/queries";
-import { formatarDataComDia } from "@/lib/datas";
+import { formatarQuando } from "@/lib/datas";
 
 export const metadata: Metadata = { title: "Início" };
 
@@ -117,7 +117,9 @@ export default async function InicioPage() {
           {proximo ? (
             <>
               <h2 className="mt-2.5 mb-0.5 text-lg font-bold">{proximo.tema}</h2>
-              <p className="mt-0 mb-2.5 text-muted">{formatarDataComDia(proximo.data)}</p>
+              <p className="mt-0 mb-2.5 text-muted">
+                {formatarQuando(proximo.data, proximo.comHora)}
+              </p>
               <Link
                 href={`/debates#debate-${proximo.id}`}
                 className={classesBotao("ghost", "small")}

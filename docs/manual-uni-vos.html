@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manual do Uni-vos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Cores da marca (as mesmas de src/app/globals.css) */
+  :root {
+    --blue: #2f5bea;
+    --red: #dc2626;
+    --purple: #7b3fe4;
+    --grad: linear-gradient(120deg, #2f5bea 0%, #7b3fe4 45%, #dc2626 92%);
+    --bg: #f4f2fb;
+    --card: #ffffff;
+    --ink: #1d1a2e;
+    --muted: #5f5a7a;
+    --accent: #6a2fd6;
+    --accent-soft: #eee7fb;
+    --line: #e2ddf0;
+    --green: #15803d;
+  }
+
+  /* ---------- página A4 ---------- */
+  @page { size: A4; margin: 16mm 15mm 18mm; }
+  @page :first { margin: 0; }
+
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 10.5pt/1.55 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  h1, h2, h3 { font-family: Fraunces, Georgia, serif; line-height: 1.15; color: var(--ink); }
+  h2 { font-size: 22pt; margin: 0 0 4pt; }
+  h3 { font-size: 13pt; margin: 16pt 0 5pt; break-after: avoid; }
+  p { margin: 5pt 0; }
+  ul, ol { margin: 5pt 0; padding-left: 16pt; }
+  li { margin: 3pt 0; }
+  b, strong { font-weight: 650; }
+  a { color: var(--accent); }
+
+  /* na tela parece uma pilha de folhas; na impressão vira páginas de verdade */
+  .folha {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 12mm auto;
+    padding: 16mm 15mm 18mm;
+    background: var(--card);
+    box-shadow: 0 10px 40px rgb(34 22 67 / 12%);
+    border-radius: 4px;
+  }
+  @media print {
+    body { background: #fff; }
+    .folha { width: auto; min-height: 0; margin: 0; padding: 0; box-shadow: none; border-radius: 0; break-before: page; }
+    .capa { break-before: auto; }
+    .sem-imprimir { display: none !important; }
+  }
+
+  /* ---------- capa ---------- */
+  .capa {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 297mm;
+    padding: 26mm 20mm 22mm;
+    overflow: hidden;
+    color: #fff;
+    background: #0d0b18;
+  }
+  @media print { .capa { min-height: 297mm; padding: 26mm 20mm 22mm; } }
+  .capa::before {
+    content: "";
+    position: absolute;
+    inset: auto -30% -40% -30%;
+    height: 75%;
+    background: var(--grad);
+    filter: blur(40px);
+    opacity: .55;
+    border-radius: 50%;
+  }
+  .capa > * { position: relative; }
+  .capa .marca { display: flex; align-items: center; gap: 14px; font: 700 20pt Fraunces, serif; }
+  .capa .marca svg { width: 64px; height: 64px; }
+  .capa h1 { font-size: 46pt; margin: 0 0 10pt; color: #fff; letter-spacing: -.02em; }
+  .capa .lema { font-size: 15pt; max-width: 130mm; color: #ece9f8; margin: 0; }
+  .capa .rodape-capa { display: flex; justify-content: space-between; font-size: 10pt; color: #cfc9e8; }
+  .faixa { height: 4px; background: var(--grad); border-radius: 4px; margin: 0 0 14pt; }
+
+  /* ---------- sumário ---------- */
+  .sumario ol { list-style: none; padding: 0; counter-reset: cap; columns: 1; }
+  .sumario li {
+    counter-increment: cap;
+    display: flex; gap: 10pt; align-items: baseline;
+    padding: 7pt 0; border-bottom: 1px dashed var(--line); margin: 0;
+  }
+  .sumario li::before {
+    content: counter(cap, decimal-leading-zero);
+    font: 700 13pt Fraunces, serif; color: var(--accent); min-width: 24pt;
+  }
+  .sumario a { color: var(--ink); text-decoration: none; font-weight: 600; }
+  .sumario small { display: block; color: var(--muted); font-weight: 400; }
+
+  /* ---------- cabeçalho das partes ---------- */
+  .parte { font: 700 9pt Inter, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin: 0 0 2pt; }
+  .resumo { color: var(--muted); font-size: 11.5pt; margin: 0 0 12pt; }
+
+  /* ---------- blocos ---------- */
+  .grade { display: grid; grid-template-columns: 1fr 1fr; gap: 10pt; }
+  .caixa { border: 1px solid var(--line); border-radius: 10px; padding: 9pt 11pt; break-inside: avoid; background: #fff; }
+  .caixa h4 { margin: 0 0 3pt; font: 650 10.5pt Inter, sans-serif; }
+  .caixa p { margin: 0; color: var(--muted); font-size: 9.5pt; }
+  .passos { counter-reset: passo; list-style: none; padding: 0; }
+  .passos > li { counter-increment: passo; position: relative; padding-left: 26pt; margin: 6pt 0; break-inside: avoid; }
+  .passos > li::before {
+    content: counter(passo);
+    position: absolute; left: 0; top: 0;
+    width: 18pt; height: 18pt; border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--grad); color: #fff; font: 700 9pt Inter, sans-serif;
+  }
+  .dica, .atencao {
+    border-radius: 0 10px 10px 0; padding: 7pt 11pt; margin: 9pt 0; break-inside: avoid; font-size: 10pt;
+  }
+  .dica { border-left: 4px solid var(--accent); background: var(--accent-soft); }
+  .atencao { border-left: 4px solid var(--red); background: #fdecec; }
+  .dica b:first-child, .atencao b:first-child { display: block; margin-bottom: 1pt; }
+  table { width: 100%; border-collapse: collapse; margin: 6pt 0; font-size: 9.5pt; break-inside: avoid; }
+  th, td { text-align: left; padding: 5pt 7pt; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--accent-soft); color: var(--accent); font-weight: 650; }
+
+  /* ---------- "desenhos" da interface ---------- */
+  .ui { display: inline-flex; align-items: center; gap: 4px; vertical-align: middle; }
+  .botao {
+    display: inline-block; padding: 1.5pt 8pt; border-radius: 8px; font-weight: 600; font-size: 9pt;
+    color: #fff; background: var(--grad); white-space: nowrap;
+  }
+  .botao.ghost { color: var(--ink); background: #fff; border: 1.5px solid var(--line); }
+  .pill { display: inline-block; padding: 1pt 7pt; border-radius: 999px; font-size: 8.5pt; font-weight: 700; background: var(--accent-soft); color: var(--accent); white-space: nowrap; }
+  .sit { display: inline-block; padding: 1pt 7pt; border-radius: 999px; font-size: 8.5pt; font-weight: 700; border: 1.5px solid var(--line); white-space: nowrap; }
+  .sit.lido { border-color: #8cc5a1; background: #e3f3e8; }
+  .sit.lendo { border-color: #93abf5; background: #e3eafd; }
+  .segmentado { display: inline-flex; border: 1.5px solid var(--line); border-radius: 9px; padding: 2px; background: #fff; }
+  .segmentado span { padding: 1pt 8pt; border-radius: 7px; font-size: 9pt; font-weight: 600; color: var(--muted); }
+  .segmentado span.on { background: var(--accent-soft); color: var(--accent); }
+  .abas { display: inline-flex; gap: 10pt; border-bottom: 1.5px solid var(--line); font-size: 9pt; font-weight: 600; color: var(--muted); }
+  .abas span { padding: 0 2pt 2pt; }
+  .abas span.on { color: var(--accent); border-bottom: 3px solid var(--accent); margin-bottom: -1.5px; }
+  .bola { display: inline-grid; place-items: center; width: 15pt; height: 15pt; border-radius: 50%; color: #fff; font-size: 6.5pt; font-weight: 700; margin-left: -3pt; border: 1.5px solid #fff; }
+  .kbd { display: inline-block; padding: 0 4pt; border: 1px solid var(--line); border-radius: 4px; font: 8.5pt ui-monospace, monospace; background: var(--bg); }
+
+  /* barra inferior do celular desenhada */
+  .barra { display: flex; justify-content: space-around; border: 1px solid var(--line); border-radius: 10px; padding: 6pt 4pt; font-size: 8pt; font-weight: 600; color: var(--muted); background: #fff; max-width: 105mm; break-inside: avoid; }
+  .barra span { display: grid; justify-items: center; gap: 1pt; }
+  .barra span.on { color: var(--accent); }
+  .barra i { font-style: normal; font-size: 11pt; }
+
+  /* exemplo de card do livro */
+  .card-livro { display: grid; grid-template-columns: 30pt 1fr auto; gap: 8pt; border: 1px solid var(--line); border-radius: 10px; padding: 9pt; break-inside: avoid; max-width: 140mm; background: #fff; }
+  .capa-mini { width: 30pt; height: 40pt; border-radius: 4px; background: linear-gradient(160deg, #4b6ef0, #2a46b8); }
+  .card-livro .tit { font-weight: 700; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
+  .card-livro .sub { color: var(--muted); font-size: 9pt; }
+  .card-livro .canto { display: grid; justify-items: end; gap: 3pt; font-size: 8pt; }
+  .card-livro .base { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 6pt; flex-wrap: wrap; }
+
+  .rodape { margin-top: 18pt; padding-top: 8pt; border-top: 1px solid var(--line); color: var(--muted); font-size: 8.5pt; }
+  .imprimir {
+    position: fixed; right: 18px; bottom: 18px; z-index: 5;
+    padding: 10px 16px; border: 0; border-radius: 12px; cursor: pointer;
+    color: #fff; background: var(--grad); font: 600 14px Inter, sans-serif;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 20%);
+  }
+  @media (max-width: 230mm) {
+    .folha { width: auto; margin: 12px; padding: 22px 18px; }
+    .grade { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<button class="imprimir sem-imprimir" type="button" onclick="window.print()">Salvar como PDF</button>
+
+<!-- ======================= CAPA ======================= -->
+<section class="folha capa">
+  <div class="marca"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="lg" gradientUnits="userSpaceOnUse" x1="1" y1="1" x2="63" y2="63"><stop offset="0" stop-color="#2f5bea"/><stop offset=".375" stop-color="#2f5bea"/><stop offset=".625" stop-color="#c0392b"/><stop offset="1" stop-color="#c0392b"/></linearGradient></defs><circle cx="32" cy="32" r="31" fill="url(#lg)"/><path d="M15.34 43.11 L14.6 41.93 L13.95 40.69 L13.39 39.41 L12.92 38.1 L12.54 36.75 L12.26 35.39 L12.07 34 L11.98 32.61 L11.99 31.22 L12.09 29.82 L12.29 28.44 L12.58 27.08 L12.97 25.74 L13.46 24.43 L14.03 23.15 L14.69 21.92 L15.43 20.74 L16.26 19.62 L17.16 18.55 L18.13 17.55 L19.17 16.62 L20.27 15.76 L21.43 14.98 L22.64 14.29 L23.9 13.68 L25.19 13.16 L26.53 12.74 L27.88 12.43 L29.26 12.22 L30.65 12.13 L32.04 12.14 L33.41 12.26 L34.77 12.49 L36.11 12.82 L37.4 13.25 L38.66 13.78 L39.86 14.4 L41.01 15.09 L42.1 15.87 L43.12 16.72 L44.08 17.63 L44.96 18.6 L45.76 19.62 L46.5 20.68 L47.16 21.78 L47.74 22.92 L48.26 24.07 L48.72 25.25 L48.16 24.12 L47.49 23.06 L46.75 22.06 L45.93 21.13 L45.05 20.27 L44.11 19.48 L43.12 18.76 L42.1 18.13 L41.04 17.57 L39.95 17.08 L38.84 16.68 L37.72 16.35 L36.58 16.1 L35.44 15.92 L34.3 15.81 L33.16 15.77 L32.03 15.8 L30.91 15.9 L29.79 16.06 L28.7 16.29 L27.61 16.57 L26.55 16.92 L25.52 17.34 L24.51 17.83 L23.54 18.38 L22.61 19 L21.73 19.69 L20.9 20.44 L20.12 21.24 L19.4 22.09 L18.74 22.99 L18.15 23.94 L17.62 24.92 L17.16 25.94 L16.77 26.99 L16.46 28.06 L16.22 29.15 L16.06 30.26 L15.98 31.37 L15.98 32.49 L16.05 33.6 L16.2 34.71 L16.43 35.81 L16.73 36.88 L17.11 37.93 L17.56 38.95 L18.08 39.94 L18.66 40.89 Z" fill="#fff"/><path d="M17 42 l-5 6" stroke="#fff" stroke-width="5" stroke-linecap="round"/><path d="M32 19 V53" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/><path d="M39 25 C37 21 25 20 25 27 C25 34 39 30 39 38 C39 45 27 45 24 40" fill="none" stroke="url(#lg)" stroke-width="6.6" stroke-linecap="round"/><path d="M39 25 C37 21 25 20 25 27 C25 34 39 30 39 38 C39 45 27 45 24 40" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/><path d="M21.6 10.4 Q21.6 9.4 22.6 9.4 H28.4 Q29.2 9.4 29.4 10.2 L29.6 11.2 H35.6 L43.6 13.2 Q44.4 13.4 44.4 14.2 Q44.4 15 43.6 15.2 L35.6 17.2 H29.6 L29.4 18.2 Q29.2 19 28.4 19 H22.6 Q21.6 19 21.6 18 Z" fill="none" stroke="url(#lg)" stroke-width="2.6" stroke-linejoin="round"/><path d="M21.6 10.4 Q21.6 9.4 22.6 9.4 H28.4 Q29.2 9.4 29.4 10.2 L29.6 11.2 H35.6 L43.6 13.2 Q44.4 13.4 44.4 14.2 Q44.4 15 43.6 15.2 L35.6 17.2 H29.6 L29.4 18.2 Q29.2 19 28.4 19 H22.6 Q21.6 19 21.6 18 Z" fill="#fff"/><rect x="29.9" y="17" width="4.2" height="3.4" rx="0.8" fill="#fff"/></svg> Uni-vos</div>
+  <div>
+    <h1>Manual de uso</h1>
+    <p class="lema">Esquerda, direita e quem tá no meio: uni-vos.<br>O clube do livro e de debates do grupo, do começo ao fim.</p>
+  </div>
+  <div class="rodape-capa">
+    <span>uni-vos.vercel.app</span>
+    <span>Versão de outubro de 2026</span>
+  </div>
+</section>
+
+<!-- ======================= SUMÁRIO ======================= -->
+<section class="folha sumario">
+  <div class="faixa"></div>
+  <h2>Sumário</h2>
+  <p class="resumo">Cada parte começa numa página nova. Se tiver pressa, leia a 1 e a 2; o resto é consulta.</p>
+  <ol>
+    <li><a href="#entrar">Entrar no grupo<small>Convite, cadastro, login e senha esquecida</small></a></li>
+    <li><a href="#navegar">Se localizar no app<small>Menu, barra do celular, busca, Ajuda e tema</small></a></li>
+    <li><a href="#inicio">Início<small>O resumo do grupo</small></a></li>
+    <li><a href="#livro-da-vez">Livro da vez<small>Página, meta da semana e comentários sem spoiler</small></a></li>
+    <li><a href="#estante">Estante e página do livro<small>Sugerir, votar, filtrar e comentar qualquer livro</small></a></li>
+    <li><a href="#meus-livros">Meus livros<small>Seu exemplar, sua leitura e sua biblioteca</small></a></li>
+    <li><a href="#debates">Debates e Pautas<small>Marcar, participar, enquetes e conclusões</small></a></li>
+    <li><a href="#mapa">Mapa político<small>As 40 afirmações e o mapa do grupo</small></a></li>
+    <li><a href="#membros">Membros e Meu perfil<small>Perfis, convites, avatar e senha</small></a></li>
+    <li><a href="#papeis">Quem pode o quê<small>Membro, moderador e dono</small></a></li>
+    <li><a href="#duvidas">Dúvidas comuns e combinados<small>Desfazer, spoiler, privacidade e respeito</small></a></li>
+  </ol>
+</section>
+
+<!-- ======================= 1. ENTRAR ======================= -->
+<section class="folha" id="entrar">
+  <div class="faixa"></div>
+  <p class="parte">Parte 1</p>
+  <h2>Entrar no grupo</h2>
+  <p class="resumo">O Uni-vos é fechado: só entra quem recebe um link de convite de quem modera o grupo.</p>
+
+  <h3>Primeira vez: pelo link de convite</h3>
+  <ol class="passos">
+    <li>Abra o link que alguém do grupo te mandou (algo como <b>uni-vos.vercel.app/convite/…</b>).</li>
+    <li>Preencha <b>nome</b>, <b>email</b> e uma <b>senha</b> de pelo menos 8 caracteres.</li>
+    <li>Toque em criar conta. Você já cai dentro do grupo. Se aparecer um aviso pedindo pra confirmar o email, abra o email e toque no link.</li>
+  </ol>
+  <div class="dica"><b>Não tem Google nem Facebook.</b>A entrada é só por email e senha. O gerenciador de senhas do celular funciona normalmente.</div>
+
+  <h3>Nas próximas vezes</h3>
+  <p>Entre em <b>uni-vos.vercel.app</b> com email e senha. O botão do olho mostra a senha que você está digitando.</p>
+
+  <h3>Esqueci minha senha</h3>
+  <ol class="passos">
+    <li>Na tela de entrada, toque em <b>Esqueci minha senha</b> e informe o email.</li>
+    <li>Abra o email e toque no link. Ele leva para a tela de senha nova.</li>
+    <li>Escolha a senha nova e pronto. Se o email demorar, espere alguns minutos antes de pedir de novo.</li>
+  </ol>
+
+  <h3>Estou em mais de um grupo</h3>
+  <p>Toque no <b>nome do grupo</b>, no topo da tela (no celular, também em <b>Mais › Trocar de grupo</b>). Tudo o que você vê muda para o grupo escolhido: livros, debates, pessoas.</p>
+
+  <div class="dica"><b>Dica: deixe na tela inicial do celular.</b>No navegador do celular, use "Adicionar à tela inicial". O Uni-vos abre como um app, com o ícone da logo.</div>
+</section>
+
+<!-- ======================= 2. NAVEGAR ======================= -->
+<section class="folha" id="navegar">
+  <div class="faixa"></div>
+  <p class="parte">Parte 2</p>
+  <h2>Se localizar no app</h2>
+  <p class="resumo">Cinco seções. Livros e Debates têm abas dentro.</p>
+
+  <table>
+    <tr><th style="width:28%">Seção</th><th>O que tem dentro</th></tr>
+    <tr><td><b>Início</b></td><td>Resumo do grupo: livro da vez, meta, próximo debate e quem está lendo.</td></tr>
+    <tr><td><b>Livros</b></td><td>Três abas: <span class="abas"><span class="on">Livro da vez</span><span>Estante</span><span>Meus livros</span></span></td></tr>
+    <tr><td><b>Debates</b></td><td>Duas abas: <span class="abas"><span class="on">Debates</span><span>Pautas</span></span></td></tr>
+    <tr><td><b>Mapa político</b></td><td>O questionário e o mapa do grupo.</td></tr>
+    <tr><td><b>Membros</b></td><td>As pessoas do grupo e o perfil de cada uma.</td></tr>
+  </table>
+
+  <h3>No celular</h3>
+  <p>O menu fica numa barra embaixo da tela:</p>
+  <div class="barra">
+    <span><i>⌂</i>Início</span><span class="on"><i>📖</i>Livros</span><span><i>🎤</i>Debates</span><span><i>🧭</i>Mapa</span><span><i>👥</i>Membros</span><span><i>⋯</i>Mais</span>
+  </div>
+  <p><b>Mais</b> guarda as coisas da sua conta: <b>Meu perfil</b>, <b>Trocar de grupo</b>, <b>Tema</b> claro ou escuro, <b>Ajuda</b> e <b>Sair</b>.</p>
+
+  <h3>No computador</h3>
+  <p>As cinco seções ficam como abas no topo. Tema, Buscar, Ajuda, sua foto e Sair ficam no canto direito.</p>
+
+  <div class="grade">
+    <div class="caixa"><h4>🔍 Buscar</h4><p>Lupa no topo, ou <span class="kbd">Ctrl</span> + <span class="kbd">K</span> no computador. Acha páginas, livros, debates, temas da pauta, pessoas e perguntas da Ajuda, sem precisar de acento.</p></div>
+    <div class="caixa"><h4>❓ Ajuda</h4><p>Botão Ajuda no topo, sempre no mesmo lugar. Abre já na parte da página em que você está, com busca. O <b>?</b> ao lado do título explica a página.</p></div>
+    <div class="caixa"><h4>↩️ Desfazer</h4><p>Quase toda ação mostra um aviso embaixo com <b>Desfazer</b> por alguns segundos. Tocou sem querer? Desfaz.</p></div>
+    <div class="caixa"><h4>🏠 Voltar ao começo</h4><p>A logo no canto superior esquerdo sempre leva ao Início. O botão Voltar do navegador também funciona.</p></div>
+  </div>
+</section>
+
+<!-- ======================= 3. INÍCIO ======================= -->
+<section class="folha" id="inicio">
+  <div class="faixa"></div>
+  <p class="parte">Parte 3</p>
+  <h2>Início</h2>
+  <p class="resumo">A primeira tela depois de entrar: tudo o que importa agora, num lugar só.</p>
+  <div class="grade">
+    <div class="caixa"><h4>📖 Livro da vez</h4><p>O livro que o grupo está lendo junto, com atalho pra atualizar sua página.</p></div>
+    <div class="caixa"><h4>🎯 Meta da semana</h4><p>Até onde ler (ex.: "Capítulo 5") e o prazo. Toque em <b>Cheguei!</b> quando chegar.</p></div>
+    <div class="caixa"><h4>🎤 Próximo debate</h4><p>Tema, data e formato do próximo encontro, ou o debate que está acontecendo agora.</p></div>
+    <div class="caixa"><h4>🧭 Mapa político</h4><p>Se você ainda não fez o questionário, aparece o convite pra fazer.</p></div>
+    <div class="caixa"><h4>👥 Quem está lendo</h4><p>O progresso de quem cadastrou o exemplar do livro da vez.</p></div>
+    <div class="caixa"><h4>🔄 Ao vivo</h4><p>A tela se atualiza sozinha quando alguém avança na leitura ou confirma presença.</p></div>
+  </div>
+</section>
+
+<!-- ======================= 4. LIVRO DA VEZ ======================= -->
+<section class="folha" id="livro-da-vez">
+  <div class="faixa"></div>
+  <p class="parte">Parte 4 · Livros</p>
+  <h2>Livro da vez</h2>
+  <p class="resumo">O livro que o grupo está lendo junto agora.</p>
+
+  <h3>Atualizar onde você parou</h3>
+  <ol class="passos">
+    <li>Primeiro, cadastre o seu exemplar em <b>Meus livros</b> (parte 6). Cada edição tem um número diferente de páginas, e o app usa a sua.</li>
+    <li>No campo <b>Em que página você parou?</b>, digite a página, ou use <span class="botao ghost">−10</span> <span class="botao ghost">+10</span>.</li>
+    <li>Toque em <span class="botao">Salvar página</span>. Chegou na última página? Sua situação vira <span class="sit lido">✓ Já li</span> sozinha.</li>
+  </ol>
+  <div class="dica"><b>Por que não apareço em "Quem está lendo"?</b>Essa lista mostra só quem cadastrou o exemplar em Meus livros. Cadastre o seu e você aparece, com página e porcentagem.</div>
+
+  <h3>Meta da semana</h3>
+  <p>Quem modera escreve até onde ler e o prazo (ex.: "Até o fim da parte 2", sexta). Quando você chegar lá, toque em <span class="botao">Cheguei!</span>. Todo mundo vê quantas pessoas já chegaram.</p>
+
+  <h3>Comentários sem spoiler</h3>
+  <ul>
+    <li>Cada comentário guarda <b>como estava a leitura de quem escreveu</b> naquela hora: <span class="sit">○ antes de ler</span> <span class="sit lendo">📖 lendo · pág. 120 de 300 (40%)</span> <span class="sit lido">✓ depois de ler</span></li>
+    <li>Comentários de um ponto do livro <b>depois de onde você está</b> ficam escondidos. Quer ler mesmo assim? Toque em <b>Mostrar mesmo assim</b>.</li>
+    <li>Funciona entre edições diferentes: o app compara a porcentagem lida, não o número da página.</li>
+    <li>O seu comentário tem uma lixeira 🗑 para apagar, com Desfazer.</li>
+  </ul>
+
+  <h3>Trocar de livro (quem modera)</h3>
+  <ol class="passos">
+    <li>Quando o grupo terminar, quem modera toca em <span class="botao ghost">Terminamos este livro</span>. Ele fica na Estante marcado como <span class="pill">✓ o grupo leu</span>.</li>
+    <li>O próximo <b>não começa sozinho</b>: o grupo combina qual ler, olhando votos e quem tem o livro.</li>
+    <li>Quem modera toca em <span class="botao ghost">Começar como livro da vez</span> no livro escolhido.</li>
+  </ol>
+</section>
+
+<!-- ======================= 5. ESTANTE ======================= -->
+<section class="folha" id="estante">
+  <div class="faixa"></div>
+  <p class="parte">Parte 5 · Livros</p>
+  <h2>Estante e página do livro</h2>
+  <p class="resumo">Todos os livros do grupo num lugar só. Nenhum livro sai daqui depois de lido.</p>
+
+  <h3>Como ler um livro da lista</h3>
+  <div class="card-livro">
+    <div class="capa-mini"></div>
+    <div>
+      <div class="tit">🥇 Capitalismo, Socialismo e Democracia</div>
+      <div class="sub">Joseph Schumpeter · 400 págs. · sugerido por Karol · 2 pessoas têm o livro</div>
+    </div>
+    <div class="canto">
+      <span>✓ <span class="bola" style="background:#dc2626">Ka</span></span>
+      <span>📖 <span class="bola" style="background:#0f766e">Jo</span></span>
+    </div>
+    <div class="base">
+      <span><span class="pill">Economia</span> <span class="pill">Clássico</span></span>
+      <span><span class="botao ghost">💬 4</span> <span class="botao ghost">▲ Votar · 3</span></span>
+    </div>
+  </div>
+  <ul>
+    <li><b>🥇</b> o mais votado entre os que o grupo ainda não leu.</li>
+    <li><b>Bolinhas no canto:</b> ao lado do ✓ quem já leu, ao lado do 📖 quem está lendo.</li>
+    <li><b>💬 4:</b> quantos comentários o livro tem. No computador, passe o mouse pra ler uma prévia; no celular, toque nele.</li>
+    <li><b>Votar</b> é dizer "quero ler esse". Toque de novo pra tirar o voto. Sugerir não conta como voto.</li>
+    <li><b>Toque no título</b> pra abrir a página do livro.</li>
+  </ul>
+
+  <h3>Filtros</h3>
+  <p><span class="segmentado"><span class="on">Todos</span><span>O grupo leu</span><span>Eu li</span></span></p>
+  <ul>
+    <li><b>O grupo leu:</b> só os que quem modera marcou como terminados. Ali dá pra escolher uma <b>Pessoa</b> e ver o que ela <b>Leu</b>, <b>Está lendo</b> ou <b>Os dois</b>, só nos livros do grupo (<b>Com o grupo</b>) ou em <b>Tudo</b>.</li>
+    <li><b>Filtrar livros:</b> digite título, autor, tema ou editora, sem precisar de acento.</li>
+    <li><b>Mais filtros:</b> tema, tipo, nível e se tem comentários. <b>Limpar filtros</b> volta a mostrar tudo.</li>
+  </ul>
+
+  <h3>Sugerir um livro</h3>
+  <p>Toque em <span class="botao">+ Sugerir livro</span> e informe título, autor e páginas aproximadas. Tema, tipo, nível, ano, editora, preço e descrição são opcionais. O app não deixa cadastrar o mesmo livro duas vezes. Quem sugeriu (ou quem modera) pode <b>Tirar da estante</b> um livro que o grupo ainda não leu.</p>
+
+  <h3>A página do livro</h3>
+  <p>Tem tudo sobre o livro: descrição, edição de referência, <b>Exemplares e progresso do grupo</b> e os <b>comentários</b>. Dá pra comentar em <b>qualquer livro</b>, lido ou não. Se você comentar antes de ler e de novo depois, os dois ficam, cada um com o seu selo.</p>
+</section>
+
+<!-- ======================= 6. MEUS LIVROS ======================= -->
+<section class="folha" id="meus-livros">
+  <div class="faixa"></div>
+  <p class="parte">Parte 6 · Livros</p>
+  <h2>Meus livros</h2>
+  <p class="resumo">Sua biblioteca: os livros da estante que você tem, com a sua edição e a sua leitura.</p>
+
+  <h3>Colocar um livro na sua biblioteca</h3>
+  <ol class="passos">
+    <li>Em <b>Adicionar à minha biblioteca</b>, busque o título ou o autor e escolha o livro. (Pela Estante: abra o livro, depois <b>Exemplares</b> › <span class="botao ghost">Eu tenho este livro</span>.)</li>
+    <li>Informe as <b>páginas da sua edição</b>, a <b>página em que está</b> e a <b>situação</b>.</li>
+    <li>Toque em <span class="botao">Salvar meu progresso</span>. Só nessa hora o exemplar é registrado. Abrir o formulário não cadastra nada.</li>
+  </ol>
+  <div class="dica"><b>Não achou o livro?</b>Use <b>Não encontrou o livro? › Cadastrar livro na estante</b>. Ele entra na estante do grupo e aparece na busca pra você registrar o exemplar.</div>
+
+  <h3>Página e situação andam juntas</h3>
+  <table>
+    <tr><th>Você faz</th><th>O app ajusta</th></tr>
+    <tr><td>Escolhe <span class="sit lido">✓ Já li</span></td><td>A página vai para o total da sua edição</td></tr>
+    <tr><td>Escolhe <span class="sit">○ Ainda não comecei</span></td><td>A página volta para 0</td></tr>
+    <tr><td>Digita a última página</td><td>A situação vira <span class="sit lido">✓ Já li</span></td></tr>
+    <tr><td>Digita uma página no meio</td><td>A situação vira <span class="sit lendo">📖 Estou lendo</span></td></tr>
+  </table>
+
+  <h3>Minha biblioteca</h3>
+  <ul>
+    <li>Cada livro mostra sua situação em cores: <span class="sit lido">✓ Já li</span> verde, <span class="sit lendo">📖 Estou lendo</span> azul e <span class="sit">○ Ainda não comecei</span> sem cor.</li>
+    <li>Toque no título pra abrir a página do livro; <b>Atualizar meu progresso</b> abre o formulário.</li>
+    <li>Use <b>Filtrar livros</b> e <b>Mais filtros</b> (situação, tema, tipo, nível, comentários) pra achar rápido.</li>
+  </ul>
+  <div class="atencao"><b>O que o grupo vê</b>Seus exemplares e seu progresso aparecem pra todo mundo do grupo: na Estante, em "Quem está lendo" e no seu perfil.</div>
+</section>
+
+<!-- ======================= 7. DEBATES ======================= -->
+<section class="folha" id="debates">
+  <div class="faixa"></div>
+  <p class="parte">Parte 7</p>
+  <h2>Debates e Pautas</h2>
+  <p class="resumo">Respeito sempre: discorde da ideia, não da pessoa. E traga fatos e fontes pra conversa.</p>
+
+  <h3>Marcar um debate</h3>
+  <p>Preencha o <b>Tema</b> e escolha <b>Quando?</b> <span class="segmentado"><span class="on">Marcar data</span><span>Já está rolando</span></span></p>
+  <ul>
+    <li><b>Marcar data:</b> informe o <b>dia</b> (de hoje em diante) e, se quiser, a <b>hora</b> (horário de Brasília). Sem hora, o debate vale pro dia todo.</li>
+    <li><b>Já está rolando:</b> o debate abre na hora, já <b>em andamento</b>, e fica registrado com a data e a hora de agora. Quando acabar, toque em <b>Encerrar</b>.</li>
+  </ul>
+  <p>Depois escolha o <b>Formato</b> e toque em <span class="botao">Marcar debate</span> (ou <span class="botao">Abrir debate agora</span>):</p>
+  <table>
+    <tr><th style="width:34%">Formato</th><th>Como funciona</th></tr>
+    <tr><td><b>Rodada com FINALIZADO!</b></td><td>Uma pessoa fala por vez e termina a mensagem com <b>FINALIZADO!</b> pra próxima começar. Réplica e tréplica valem.</td></tr>
+    <tr><td><b>Clube do livro</b></td><td>Conversa ligada ao livro que o grupo está lendo.</td></tr>
+    <tr><td><b>Livre</b></td><td>Conversa aberta, sem ordem de fala.</td></tr>
+  </table>
+
+  <h3>Participar</h3>
+  <ul>
+    <li><span class="botao">Vou participar</span> confirma presença; toque de novo pra cancelar.</li>
+    <li><b>Compartilhar no WhatsApp</b> ou <b>Copiar link</b> manda o debate pro grupo.</li>
+    <li><b>Abrir debate</b> leva à página do debate: presença, enquete, conclusões e comentários.</li>
+    <li><b>Iniciar debate</b> e <b>Encerrar</b> (quem marcou ou quem modera) só mudam a fase no app: não abrem chamada de vídeo.</li>
+  </ul>
+
+  <h3>Enquete: antes e depois</h3>
+  <ol class="passos">
+    <li>Qualquer pessoa propõe a <b>pergunta inicial</b>; quem modera aprova ou recusa.</li>
+    <li>Antes do debate, cada um vota: <b>A favor</b>, <b>Contra</b> ou <b>Nenhum dos dois</b>.</li>
+    <li>Depois de encerrar, vota de novo. O debate mostra quantas <b>viradas de opinião</b> teve.</li>
+  </ol>
+  <p>Depois do debate também dá pra propor uma <b>enquete de posicionamento</b> e sugerir <b>outras conclusões</b>, em que o grupo vota <b>Concordo</b> ou <b>Discordo</b>. As votações <b>não são anônimas</b>.</p>
+
+  <h3>Pautas</h3>
+  <p>A lista de temas que o grupo quer debater. <span class="botao">Propor tema</span> já conta o seu voto; vote nos temas que te interessam (os mais votados sobem). <span class="botao ghost">Virar debate</span> abre o formulário de Debates com o tema preenchido: só escolher a data. Quem propôs (ou quem modera) pode <b>Tirar da pauta</b>.</p>
+</section>
+
+<!-- ======================= 8. MAPA ======================= -->
+<section class="folha" id="mapa">
+  <div class="faixa"></div>
+  <p class="parte">Parte 8</p>
+  <h2>Mapa político</h2>
+  <p class="resumo">Um jogo pra puxar debate, não um teste científico.</p>
+
+  <h3>Como funciona</h3>
+  <ul>
+    <li><b>40 afirmações</b>, uma por vez, em ordem embaralhada pra cada pessoa.</li>
+    <li>Pra cada uma, diga o quanto concorda: <b>Discordo totalmente</b>, <b>Discordo</b>, <b>Neutro</b>, <b>Concordo</b> ou <b>Concordo plenamente</b>.</li>
+    <li>O resultado é um ponto em <b>dois eixos</b>: economia (esquerda ↔ direita) e costumes (progressista ↔ conservador), com um rótulo. Perto do meio em um eixo, o rótulo diz centro ou moderado.</li>
+  </ul>
+
+  <div class="grade">
+    <div class="caixa"><h4>⏸ Pausar e voltar</h4><p><b>Pausar</b> guarda tudo; quando voltar, continua da mesma pergunta, na mesma ordem. <b>← Voltar</b> refaz a anterior.</p></div>
+    <div class="caixa"><h4>⌨️ Atalhos no computador</h4><p>Teclas <span class="kbd">1</span> a <span class="kbd">5</span> respondem; <span class="kbd">←</span> volta uma pergunta.</p></div>
+    <div class="caixa"><h4>🔒 O que é privado</h4><p>Suas respostas, uma a uma, são só suas. O grupo vê apenas o resultado: o ponto no mapa e o rótulo.</p></div>
+    <div class="caixa"><h4>🔁 Refazer</h4><p><b>Refazer questionário</b> apaga suas respostas e começa de novo, com confirmação antes.</p></div>
+  </div>
+  <p>O resultado aparece no seu perfil e no <b>mapa do grupo</b>, com todo mundo junto. A ideia é ver de onde cada um parte, não rotular ninguém.</p>
+</section>
+
+<!-- ======================= 9. MEMBROS E PERFIL ======================= -->
+<section class="folha" id="membros">
+  <div class="faixa"></div>
+  <p class="parte">Parte 9</p>
+  <h2>Membros e Meu perfil</h2>
+
+  <h3>Membros</h3>
+  <p>Um card pra cada pessoa do grupo, com o rótulo do mapa político e quantos livros sugeriu, adquiriu e quantos debates confirmou. Toque no card pra ver o perfil completo:</p>
+  <ul>
+    <li><b>🧭 Mapa político:</b> o ponto da pessoa nos dois eixos.</li>
+    <li><b>Sugeriu:</b> os livros que ela colocou na estante.</li>
+    <li><b>📚 Adquiriu:</b> os exemplares que ela tem, com a situação e o progresso de cada um.</li>
+    <li><b>🎤 Debates:</b> os debates de que participou.</li>
+  </ul>
+
+  <h3>Convidar alguém (quem modera)</h3>
+  <ol class="passos">
+    <li>Em <b>Membros</b>, no quadro de convites, dê um <b>Nome do link</b> (ex.: "grupo do zap"). Só quem modera vê esse nome.</li>
+    <li>Toque em <span class="botao">Gerar link</span> e mande o link. O quadro mostra quem entrou por cada link.</li>
+    <li>O link vazou? Toque em <b>Desativar</b>: quem já entrou continua; ninguém novo entra por ele. <b>Reativar</b> volta a valer.</li>
+  </ol>
+  <div class="atencao"><b>Gere os links pelo site publicado</b>Crie os convites dentro de uni-vos.vercel.app, pra que o link leve ao endereço certo.</div>
+
+  <h3>Meu perfil</h3>
+  <p>Toque na sua foto, no topo (no celular, também em <b>Mais › Meu perfil</b>):</p>
+  <ul>
+    <li><b>Nome:</b> como você aparece no grupo.</li>
+    <li><b>Avatar:</b> escolha uma cor e suas iniciais ou um ícone. A prévia mostra antes de salvar.</li>
+    <li><b>Senha:</b> troque quando quiser (mínimo 8 caracteres). Você continua conectado neste aparelho.</li>
+  </ul>
+</section>
+
+<!-- ======================= 10. PAPÉIS ======================= -->
+<section class="folha" id="papeis">
+  <div class="faixa"></div>
+  <p class="parte">Parte 10</p>
+  <h2>Quem pode o quê</h2>
+  <p class="resumo">Três papéis. Quem modera vale só pro próprio grupo.</p>
+  <table>
+    <tr><th style="width:40%">Ação</th><th>Membro</th><th>Moderador</th><th>Dono</th></tr>
+    <tr><td>Ler, votar, comentar, confirmar presença</td><td>✓</td><td>✓</td><td>✓</td></tr>
+    <tr><td>Sugerir livro e propor tema ou enquete</td><td>✓</td><td>✓</td><td>✓</td></tr>
+    <tr><td>Marcar debate</td><td>✓</td><td>✓</td><td>✓</td></tr>
+    <tr><td>Iniciar e encerrar o debate</td><td>se marcou</td><td>✓</td><td>✓</td></tr>
+    <tr><td>Tirar livro ou tema sugerido</td><td>se sugeriu</td><td>✓</td><td>✓</td></tr>
+    <tr><td>Aprovar ou recusar enquetes</td><td></td><td>✓</td><td>✓</td></tr>
+    <tr><td>Definir a meta da semana</td><td></td><td>✓</td><td>✓</td></tr>
+    <tr><td>Terminar o livro e começar o próximo</td><td></td><td>✓</td><td>✓</td></tr>
+    <tr><td>Gerar e desativar links de convite</td><td></td><td>✓</td><td>✓</td></tr>
+    <tr><td>Criar grupos e escolher moderadores</td><td></td><td></td><td>✓</td></tr>
+    <tr><td>Ver a auditoria (Admin)</td><td></td><td></td><td>✓</td></tr>
+    <tr><td>Criar temas, tipos e níveis do catálogo</td><td></td><td></td><td>✓</td></tr>
+  </table>
+
+  <h3>Admin (só o dono)</h3>
+  <p>A página <b>Admin</b> aparece só pro dono do sistema (no celular, em <b>Mais</b>). Nela dá pra criar grupos, tornar alguém moderador e ver a <b>auditoria</b>: grupos criados, links gerados, desativados e reativados, quem entrou por qual link e quem virou moderador, com data e hora.</p>
+</section>
+
+<!-- ======================= 11. DÚVIDAS ======================= -->
+<section class="folha" id="duvidas">
+  <div class="faixa"></div>
+  <p class="parte">Parte 11</p>
+  <h2>Dúvidas comuns e combinados</h2>
+
+  <div class="grade">
+    <div class="caixa"><h4>Fiz algo sem querer</h4><p>Olhe o aviso que aparece embaixo e toque em <b>Desfazer</b> enquanto ele estiver na tela. Ações sem volta (como terminar o livro) sempre pedem confirmação antes.</p></div>
+    <div class="caixa"><h4>Minha edição tem outro número de páginas</h4><p>Normal. Informe o total da sua edição em Meus livros. O progresso e o "sem spoiler" usam a porcentagem, não a página.</p></div>
+    <div class="caixa"><h4>Não consigo votar na enquete</h4><p>Ela precisa estar aprovada. O voto de antes vale até o debate encerrar; o de depois abre quando encerra.</p></div>
+    <div class="caixa"><h4>O link do debate pede pra entrar</h4><p>O link leva ao debate, mas só quem tem conta e está no grupo vê a conversa e vota.</p></div>
+    <div class="caixa"><h4>Não vejo um botão de moderação</h4><p>As opções mudam conforme seu papel e o grupo aberto no topo. Confira a tabela da parte 10.</p></div>
+    <div class="caixa"><h4>Sumiu um livro?</h4><p>Livro lido não sai da Estante. Confira os filtros: <b>Limpar filtros</b> volta a mostrar tudo.</p></div>
+  </div>
+
+  <h3>Os combinados do grupo</h3>
+  <ul>
+    <li><b>Respeito sempre.</b> Discorde da ideia, não da pessoa. Ninguém aqui está errado por ter opinião.</li>
+    <li><b>Traga fatos e fontes.</b> Um link vale mais que um grito.</li>
+    <li><b>Sem spoiler.</b> O app esconde, mas o bom senso ajuda: avise quando for falar do final.</li>
+    <li><b>Nas rodadas,</b> espere o <b>FINALIZADO!</b> da pessoa antes de responder.</li>
+  </ul>
+
+  <div class="dica"><b>Ainda com dúvida?</b>Toque em <b>Ajuda</b> no topo de qualquer tela: ela abre na parte da página em que você está e tem busca.</div>
+
+  <p class="rodape">Uni-vos · Esquerda, direita e quem tá no meio: uni-vos. · uni-vos.vercel.app</p>
+</section>
+
+</body>
+</html>
