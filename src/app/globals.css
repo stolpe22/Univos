@@ -2,6 +2,7 @@
 
 /* Tokens do design system (CLAUDE.md). Cor solta só aqui, nunca em componente. */
 :root {
+  color-scheme: light;
   --blue: #2f5bea;
   --red: #dc2626;
   --purple: #7b3fe4;
@@ -25,6 +26,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
+    color-scheme: dark;
     --bg: #0f0d1a;
     --card: #1a1729;
     --ink: #ece9f8;
@@ -34,6 +36,30 @@
     --accent-soft: #2a2146;
     --err: #ff6b6b;
   }
+}
+
+:root[data-theme="claro"] {
+  color-scheme: light;
+  --bg: #f4f2fb;
+  --card: #ffffff;
+  --ink: #1d1a2e;
+  --muted: #5f5a7a;
+  --line: #e2ddf0;
+  --accent: #6a2fd6;
+  --accent-soft: #ece4fd;
+  --err: #c81e1e;
+}
+
+:root[data-theme="escuro"] {
+  color-scheme: dark;
+  --bg: #0f0d1a;
+  --card: #1a1729;
+  --ink: #ece9f8;
+  --muted: #a9a4c4;
+  --line: #2e2a45;
+  --accent: #b08cff;
+  --accent-soft: #2a2146;
+  --err: #ff6b6b;
 }
 
 /* Telas de entrada (login, convite): sempre escuras, nos dois temas. */

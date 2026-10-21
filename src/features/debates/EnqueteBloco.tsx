@@ -107,13 +107,15 @@ function ProporEnquete({ debateId }: { debateId: number }) {
 
   if (!aberto) {
     return (
-      <button
-        type="button"
-        onClick={() => setAberto(true)}
-        className="mt-2 min-h-11 cursor-pointer text-sm font-semibold text-accent underline"
-      >
-        + Propor uma enquete pra este debate
-      </button>
+      <div className="mt-4 border-t border-line pt-3">
+        <button
+          type="button"
+          onClick={() => setAberto(true)}
+          className="min-h-11 cursor-pointer text-left text-sm font-semibold text-accent underline"
+        >
+          + Propor uma enquete pra este debate
+        </button>
+      </div>
     );
   }
 

@@ -7,6 +7,7 @@ import { Avatar, type CorPerfil } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Logo } from "@/components/ui/Logo";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { Sheet } from "@/components/ui/Sheet";
 import { AjudaSheet } from "@/features/ajuda/AjudaSheet";
 import { sair } from "@/features/auth/actions";
@@ -108,6 +109,7 @@ export function AppShell({ usuario, grupo, grupos, dono, children }: Props) {
 
           {/* Ajuda sempre no mesmo lugar, topo à direita (WCAG 3.2.6) */}
           <div className="flex items-center gap-2">
+            <ThemeToggle className="hidden min-h-11 cursor-pointer items-center gap-2 rounded-xl border-[1.5px] border-line bg-transparent px-3 text-sm font-semibold text-ink md:inline-flex" />
             {/* Busca global: sempre no topo, ao lado da Ajuda */}
             <Button
               variante="ghost"
@@ -213,6 +215,7 @@ export function AppShell({ usuario, grupo, grupos, dono, children }: Props) {
               Trocar de grupo
             </button>
           )}
+          <ThemeToggle className={`${ITEM_MENU} md:hidden`} />
           <button type="button" onClick={() => abrirAjuda()} className={ITEM_MENU}>
             <Icon nome="help" />
             Ajuda

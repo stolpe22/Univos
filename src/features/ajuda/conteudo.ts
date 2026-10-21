@@ -34,6 +34,11 @@ export const AJUDA: Record<string, SecaoAjuda> = {
         pergunta: "Como volto para cá?",
         resposta: "Toque na logo Uni-vos no topo ou em Início.",
       },
+      {
+        pergunta: "Como mudo entre tema claro e escuro?",
+        resposta:
+          "No computador, use o botão de tema no topo. No celular, abra Mais e toque em Tema. Sua escolha fica salva neste aparelho.",
+      },
     ],
   },
   livro: {
