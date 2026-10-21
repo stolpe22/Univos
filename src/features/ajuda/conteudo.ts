@@ -115,7 +115,7 @@ export const AJUDA: Record<string, SecaoAjuda> = {
       {
         pergunta: "Como funciona a enquete do debate?",
         resposta:
-          "A pergunta inicial é proposta antes do debate e precisa da aprovação de quem modera. Depois de encerrar, também dá pra propor uma enquete de posicionamento. Nas duas, cada pessoa pode registrar como pensava antes e como ficou depois; quem não votou antes pode registrar essa posição histórica ao final. Também dá pra sugerir outras conclusões e votar concordo ou discordo.",
+          "A pergunta inicial é proposta antes ou durante o debate (inclusive num debate aberto com Já está rolando) e precisa da aprovação de quem modera. Depois de encerrar, também dá pra propor uma enquete de posicionamento. Nas duas, cada pessoa pode registrar como pensava antes e como ficou depois; quem não votou antes pode registrar essa posição histórica ao final. Também dá pra sugerir outras conclusões e votar concordo ou discordo.",
       },
       {
         pergunta: "A enquete é anônima?",

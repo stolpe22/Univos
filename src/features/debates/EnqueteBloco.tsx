@@ -13,7 +13,8 @@ export function EnqueteBloco({ debate, eu, modera }: Props) {
   const enquetes = [debate.enquete, debate.enquetePosDebate].filter(
     (enquete): enquete is Enquete => enquete !== null,
   );
-  const podeProporInicial = debate.status === "agendado" && debate.enquete === null;
+  // a pergunta inicial vale também com o debate em andamento ("Já está rolando")
+  const podeProporInicial = debate.status !== "encerrado" && debate.enquete === null;
   const podeProporPosDebate = debate.status === "encerrado" && debate.enquetePosDebate === null;
 
   if (enquetes.length === 0 && !podeProporInicial && !podeProporPosDebate) return null;
@@ -71,8 +72,10 @@ function EnqueteItem({
       {debate.status === "ao_vivo" && (
         <>
           <p className="mt-0 mb-2 text-sm text-muted">
-            A votação de antes fechou. A de depois abre quando o debate terminar.
+            O debate está rolando: marque como você pensava quando ele começou. A votação de depois
+            abre quando o debate terminar.
           </p>
+          <Votacao enqueteId={enquete.id} momento="antes" votos={enquete.votos} eu={eu} />
           <Placar votos={enquete.votos} momento="antes" titulo="Antes do debate" />
         </>
       )}
