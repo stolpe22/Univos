@@ -19,8 +19,12 @@ export function Sheet({ aberto, aoFechar, titulo, children }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   const idTitulo = useId();
   const { esconder } = useToast();
+  // Se fomos nós que fechamos (aberto virou false, ex.: trocar o Mais pela Ajuda), o
+  // evento "close" do dialog não pode chamar aoFechar: isso fecharia a janela nova.
+  const abertoRef = useRef(aberto);
 
   useEffect(() => {
+    abertoRef.current = aberto;
     const dialog = ref.current;
     if (!dialog) return;
     if (aberto && !dialog.open) {
@@ -35,7 +39,10 @@ export function Sheet({ aberto, aoFechar, titulo, children }: Props) {
     <dialog
       ref={ref}
       aria-labelledby={idTitulo}
-      onClose={aoFechar}
+      onClose={() => {
+        // só quando quem fechou foi a pessoa (Esc); o fechamento pelo app já foi decidido
+        if (abertoRef.current) aoFechar();
+      }}
       onClick={(e) => {
         // toque no fundo escuro fecha (o conteúdo fica num div, então só o fundo é o próprio dialog)
         if (e.target === ref.current) aoFechar();

@@ -42,6 +42,11 @@ export const AJUDA: Record<string, SecaoAjuda> = {
           "O menu tem 5 partes: Início, Livros (Livro da vez, Estante e Meus livros), Debates (agenda e Pauta), Mapa político e Membros. Dentro de Livros e de Debates, as abas no topo da página trocam entre elas. No celular, Mais guarda seu perfil, a troca de grupo, o tema, a Ajuda e Sair.",
       },
       {
+        pergunta: "O que é a bolinha vermelha no menu?",
+        resposta:
+          "Quer dizer que tem coisa nova desde a última vez que você abriu aquela página: membro novo, livro novo na Estante, livro da vez novo, debate novo ou começando, ou mais alguém que fez o Mapa político. Ela some quando você abre a página, só pra você: quem ainda não viu continua vendo a bolinha. O que você mesmo fez não acende bolinha.",
+      },
+      {
         pergunta: "Como volto para cá?",
         resposta: "Toque na logo Uni-vos no topo ou em Início.",
       },

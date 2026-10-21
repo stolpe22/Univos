@@ -6,9 +6,12 @@ import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Logo } from "@/components/ui/Logo";
 import { sair } from "@/features/auth/actions";
+import type { PaginaNovidade } from "@/features/novidades/regras";
 import { rotaAtual, secaoDe, type Secao } from "@/lib/rotas";
 import { ThemeToggle } from "../ThemeToggle";
 import { ITEM_ABA } from "./estilos";
+import { PontoNovidade } from "./PontoNovidade";
+import { temNovidade } from "./useNovidades";
 import type { Navegacao } from "./useNavegacaoPendente";
 
 export type UsuarioShell = { nome: string; cor: CorPerfil; icone: IconePerfil | "" };
@@ -20,6 +23,8 @@ type Props = {
   /** Seções do menu (abas do desktop). */
   secoes: Secao[];
   atual: Secao | undefined;
+  /** Páginas com coisa nova pra esta pessoa (bolinha na aba). */
+  novas: Set<PaginaNovidade>;
   navegacao: Navegacao;
   aoBuscar: () => void;
   aoAjuda: () => void;
@@ -33,6 +38,7 @@ export function Cabecalho({
   variosGrupos,
   secoes,
   atual,
+  novas,
   navegacao,
   aoBuscar,
   aoAjuda,
@@ -127,6 +133,7 @@ export function Cabecalho({
               className={ITEM_ABA}
             >
               {s.nome}
+              {temNovidade(s.paginas, novas) && <PontoNovidade className="ml-1.5" />}
             </Link>
           );
         })}

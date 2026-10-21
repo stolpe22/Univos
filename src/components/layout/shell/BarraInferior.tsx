@@ -2,13 +2,17 @@
 
 import Link from "next/link";
 import { Icon } from "@/components/ui/Icon";
+import type { PaginaNovidade } from "@/features/novidades/regras";
 import type { Secao } from "@/lib/rotas";
 import { ITEM_BARRA } from "./estilos";
+import { PontoNovidade } from "./PontoNovidade";
+import { temNovidade } from "./useNovidades";
 import type { Navegacao } from "./useNavegacaoPendente";
 
 type Props = {
   secoes: Secao[];
   atual: Secao | undefined;
+  novas: Set<PaginaNovidade>;
   /** A página atual fica em "Mais" (perfil, Admin). */
   atualNoMais: boolean;
   /** Nome da página atual, quando ela fica em "Mais". */
@@ -21,6 +25,7 @@ type Props = {
 export function BarraInferior({
   secoes,
   atual,
+  novas,
   atualNoMais,
   nomeNoMais,
   navegacao,
@@ -42,7 +47,12 @@ export function BarraInferior({
             aria-label={s.curto === s.nome ? undefined : s.nome}
             className={ITEM_BARRA}
           >
-            <Icon nome={s.icone} />
+            <span className="relative">
+              <Icon nome={s.icone} />
+              {temNovidade(s.paginas, novas) && (
+                <PontoNovidade className="absolute -top-0.5 -right-1" />
+              )}
+            </span>
             <span>{s.curto}</span>
           </Link>
         );

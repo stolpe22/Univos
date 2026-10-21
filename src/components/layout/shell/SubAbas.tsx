@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import type { PaginaNovidade } from "@/features/novidades/regras";
 import type { Rota, Secao } from "@/lib/rotas";
 import { ITEM_SUBABA } from "./estilos";
+import { PontoNovidade } from "./PontoNovidade";
+import { temNovidade } from "./useNovidades";
 import type { Navegacao } from "./useNavegacaoPendente";
 
 /**
@@ -13,10 +16,12 @@ import type { Navegacao } from "./useNavegacaoPendente";
 export function SubAbas({
   secao,
   atual,
+  novas,
   navegacao,
 }: {
   secao: Secao;
   atual: Rota;
+  novas: Set<PaginaNovidade>;
   navegacao: Navegacao;
 }) {
   return (
@@ -30,6 +35,7 @@ export function SubAbas({
           className={ITEM_SUBABA}
         >
           {r.nomeSubaba ?? r.nome}
+          {temNovidade([r], novas) && <PontoNovidade className="ml-1.5" />}
         </Link>
       ))}
     </nav>
