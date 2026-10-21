@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Avatar } from "@/components/ui/Avatar";
+import { SituacaoLeitura } from "@/features/estante/SituacaoLeitura";
 import { Pill } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
-import { rotuloStatus } from "@/features/estante/taxonomia";
 import { formatarData } from "@/lib/datas";
 import type { ProgressoPessoa } from "./queries";
 import { porcentagem } from "./regras";
@@ -33,7 +33,7 @@ export function ProgressoGrupo({ pessoas, eu }: { pessoas: ProgressoPessoa[]; eu
               <b className="flex items-center gap-1.5">
                 {p.nome}
                 {p.id === eu && <Pill>você</Pill>}
-                <Pill>{rotuloStatus(p.statusLeitura)}</Pill>
+                <SituacaoLeitura status={p.statusLeitura} />
               </b>
               <span className="text-[13.5px] text-muted">
                 pág. {p.pagina} de {p.paginasEdicao} · {porcentagem(p.pagina, p.paginasEdicao)}%

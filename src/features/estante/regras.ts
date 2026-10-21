@@ -1,3 +1,4 @@
+import { normalizar } from "@/lib/texto";
 import type { LivroEstante } from "./queries";
 
 import type { StatusLeitura } from "./taxonomia";
@@ -106,4 +107,73 @@ export function leitores(livros: LivroEstante[]) {
   return [...nomes]
     .map(([id, nome]) => ({ id, nome }))
     .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+}
+
+/** Campos do livro em que o filtro de texto procura (o mesmo na Estante e em Meus livros). */
+export function textoDoLivro(livro: LivroEstante) {
+  return normalizar(
+    [livro.titulo, livro.autor, livro.temaNome, livro.tipo, livro.nivelNome, livro.editora]
+      .filter(Boolean)
+      .join(" "),
+  );
+}
+
+/** Todas as palavras digitadas aparecem no livro, sem ligar para acento ou maiúscula. */
+export function combinaTexto(livro: LivroEstante, busca: string) {
+  const palavras = normalizar(busca).split(/\s+/).filter(Boolean);
+  if (palavras.length === 0) return true;
+  const texto = textoDoLivro(livro);
+  return palavras.every((p) => texto.includes(p));
+}
+
+/** Filtro rápido da lista: texto, classificação do catálogo e comentários (vazio = qualquer um). */
+export type FiltroCatalogo = {
+  texto: string;
+  tema: string;
+  tipo: string;
+  nivel: string;
+  /** "com": só livros com comentário; "sem": só os sem nenhum. */
+  comentarios: string;
+};
+export const FILTRO_VAZIO: FiltroCatalogo = {
+  texto: "",
+  tema: "",
+  tipo: "",
+  nivel: "",
+  comentarios: "",
+};
+
+/** Opções do seletor de comentários (a mesma lista na Estante e em Meus livros). */
+export const OPCOES_COMENTARIOS = [
+  { valor: "com", rotulo: "Com comentários" },
+  { valor: "sem", rotulo: "Sem comentários" },
+] as const;
+
+export function filtrarCatalogo(livros: LivroEstante[], f: FiltroCatalogo) {
+  return livros.filter(
+    (l) =>
+      combinaTexto(l, f.texto) &&
+      (!f.tema || l.tema === f.tema) &&
+      (!f.tipo || l.tipo === f.tipo) &&
+      (!f.nivel || String(l.nivel) === f.nivel) &&
+      (!f.comentarios || (f.comentarios === "com") === l.comentarios > 0),
+  );
+}
+
+/** Só as opções que algum livro usa, para os seletores não mostrarem escolha vazia. */
+export function opcoesCatalogo(livros: LivroEstante[]) {
+  const unicos = (pares: [string, string][]) =>
+    [...new Map(pares)]
+      .map(([valor, rotulo]) => ({ valor, rotulo }))
+      .sort((a, b) => a.rotulo.localeCompare(b.rotulo, "pt-BR"));
+  return {
+    temas: unicos(livros.flatMap((l) => (l.tema ? [[l.tema, l.temaNome ?? l.tema]] : []))),
+    tipos: unicos(livros.flatMap((l) => (l.tipo ? [[l.tipo, l.tipo]] : []))),
+    // nível segue a ordem do número (1, 2, 3…), não a alfabética
+    niveis: unicos(
+      livros.flatMap((l) =>
+        l.nivel !== null ? [[String(l.nivel), l.nivelNome ?? `Nível ${l.nivel}`]] : [],
+      ),
+    ).sort((a, b) => Number(a.valor) - Number(b.valor)),
+  };
 }

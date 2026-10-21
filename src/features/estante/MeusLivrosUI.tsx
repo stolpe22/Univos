@@ -1,17 +1,27 @@
 "use client";
 
+import Link from "next/link";
 import { useId, useMemo, useState } from "react";
+import { SituacaoLeitura } from "./SituacaoLeitura";
 import { Button } from "@/components/ui/Button";
-import { Card, Pill } from "@/components/ui/Card";
+import { Card } from "@/components/ui/Card";
 import { Field } from "@/components/ui/Field";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { porcentagem } from "@/features/livro/regras";
 import { normalizar } from "@/lib/texto";
+import { FiltroLivros } from "./FiltroLivros";
 import { EdicoesDoGrupo } from "./EdicoesDoGrupo";
 import { MetadadosCatalogo } from "./MetadadosCatalogo";
 import type { LivroEstante, TaxonomiaCatalogo } from "./queries";
+import {
+  combinaTexto,
+  filtrarCatalogo,
+  FILTRO_VAZIO,
+  opcoesCatalogo,
+  OPCOES_COMENTARIOS,
+} from "./regras";
 import { SugerirLivroForm } from "./SugerirLivroForm";
-import { rotuloStatus } from "./taxonomia";
+import { STATUS_LEITURA } from "./taxonomia";
 
 type Props = {
   livros: LivroEstante[];
@@ -28,7 +38,11 @@ export function MeusLivrosUI({ livros, taxonomia, eu, admin }: Props) {
 
   return (
     <div className="grid gap-3.5">
-      <Card titulo="Adicionar à minha biblioteca" id="adicionar-meu-livro" className="relative z-20">
+      <Card
+        titulo="Adicionar à minha biblioteca"
+        id="adicionar-meu-livro"
+        className="relative z-10"
+      >
         <p className="mt-0 text-sm text-muted">
           Vincule seu exemplar a um livro que já esteja na estante do grupo.
         </p>
@@ -47,7 +61,7 @@ export function MeusLivrosUI({ livros, taxonomia, eu, admin }: Props) {
                   {selecionado.autor} · cerca de {selecionado.paginas} páginas na edição de
                   referência
                 </p>
-                <MetadadosCatalogo livro={selecionado} />
+                <MetadadosCatalogo livro={selecionado} completo />
               </div>
               <Button variante="ghost" tamanho="small" onClick={() => setSelecionadoId(null)}>
                 Fechar
@@ -74,7 +88,17 @@ export function MeusLivrosUI({ livros, taxonomia, eu, admin }: Props) {
       </Card>
 
       <Card titulo={`Minha biblioteca (${meus.length})`} id="minha-biblioteca">
-        <MinhaBiblioteca livros={meus} eu={eu} aoAbrir={(l) => setSelecionadoId(l.id)} />
+        <MinhaBiblioteca
+          livros={meus}
+          eu={eu}
+          aoAbrir={(l) => {
+            setSelecionadoId(l.id);
+            // o formulário fica no primeiro card: leva a tela até ele
+            document
+              .getElementById("adicionar-meu-livro")
+              ?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+        />
       </Card>
     </div>
   );
@@ -95,7 +119,7 @@ function BuscarLivro({
   const resultados = useMemo(() => {
     const termo = normalizar(busca.trim());
     if (!termo) return [];
-    return livros.filter((l) => normalizar(`${l.titulo} ${l.autor}`).includes(termo)).slice(0, 7);
+    return livros.filter((l) => combinaTexto(l, termo)).slice(0, 7);
   }, [busca, livros]);
   const mostrando = aberto && resultados.length > 0;
 
@@ -184,6 +208,8 @@ function MinhaBiblioteca({
   eu: string;
   aoAbrir: (livro: LivroEstante) => void;
 }) {
+  // os mesmos filtros da Estante, mais a sua situação de leitura
+  const [filtro, setFiltro] = useState({ ...FILTRO_VAZIO, situacao: "" });
   if (livros.length === 0) {
     return (
       <p className="m-0 py-3 text-muted">
@@ -191,36 +217,77 @@ function MinhaBiblioteca({
       </p>
     );
   }
+  const minhaSituacao = (l: LivroEstante) => l.leituras.find((x) => x.userId === eu)?.status;
+  const opcoes = opcoesCatalogo(livros);
+  const visiveis = filtrarCatalogo(livros, filtro).filter(
+    (l) => !filtro.situacao || minhaSituacao(l) === filtro.situacao,
+  );
   return (
-    <ul className="m-0 grid list-none gap-2 p-0 sm:grid-cols-2">
-      {livros.map((livro) => {
-        const leitura = livro.leituras.find((l) => l.userId === eu);
-        if (!leitura) return null;
-        return (
-          <li key={livro.id} className="rounded-xl border border-line bg-bg p-3">
-            <button
-              type="button"
-              onClick={() => aoAbrir(livro)}
-              className="min-h-11 cursor-pointer text-left font-bold text-accent underline"
-            >
-              {livro.titulo}
-            </button>
-            <p className="mt-0 mb-2 text-sm text-muted">{livro.autor}</p>
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-sm">
-              <Pill>{rotuloStatus(leitura.status)}</Pill>
-              <span>
-                {leitura.pagina}/{leitura.paginas} páginas ·{" "}
-                {porcentagem(leitura.pagina, leitura.paginas)}%
-              </span>
-            </div>
-            <ProgressBar
-              valor={leitura.pagina}
-              max={leitura.paginas}
-              rotulo={`Seu progresso em ${livro.titulo}`}
-            />
-          </li>
-        );
-      })}
-    </ul>
+    <>
+      <FiltroLivros
+        valores={filtro}
+        aoMudar={(chave, valor) => setFiltro((atual) => ({ ...atual, [chave]: valor }))}
+        mostrando={visiveis.length}
+        total={livros.length}
+        seletores={[
+          {
+            chave: "situacao",
+            rotulo: "Situação",
+            todos: "Todas",
+            opcoes: STATUS_LEITURA.filter((s) => livros.some((l) => minhaSituacao(l) === s.valor)),
+          },
+          { chave: "tema", rotulo: "Tema", todos: "Todos", opcoes: opcoes.temas },
+          { chave: "tipo", rotulo: "Tipo", todos: "Todos", opcoes: opcoes.tipos },
+          { chave: "nivel", rotulo: "Nível", todos: "Todos", opcoes: opcoes.niveis },
+          {
+            chave: "comentarios",
+            rotulo: "Comentários",
+            todos: "Todos",
+            opcoes: OPCOES_COMENTARIOS,
+          },
+        ]}
+      />
+      {visiveis.length === 0 && (
+        <p className="m-0 py-3 text-muted">
+          Nenhum livro seu com esses filtros. Mude o texto ou toque em Limpar filtros.
+        </p>
+      )}
+      <ul className="m-0 grid list-none gap-2 p-0 sm:grid-cols-2">
+        {visiveis.map((livro) => {
+          const leitura = livro.leituras.find((l) => l.userId === eu);
+          if (!leitura) return null;
+          return (
+            <li key={livro.id} className="rounded-xl border border-line bg-bg p-3">
+              <Link
+                href={`/estante/${livro.id}`}
+                className="inline-flex min-h-11 items-center font-bold text-accent underline"
+              >
+                {livro.titulo}
+              </Link>
+              <p className="mt-0 mb-2 text-sm text-muted">{livro.autor}</p>
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-sm">
+                <SituacaoLeitura status={leitura.status} />
+                <span>
+                  {leitura.pagina}/{leitura.paginas} páginas ·{" "}
+                  {porcentagem(leitura.pagina, leitura.paginas)}%
+                </span>
+              </div>
+              <ProgressBar
+                valor={leitura.pagina}
+                max={leitura.paginas}
+                rotulo={`Seu progresso em ${livro.titulo}`}
+              />
+              <button
+                type="button"
+                onClick={() => aoAbrir(livro)}
+                className="mt-1 min-h-11 cursor-pointer text-sm font-semibold text-accent underline"
+              >
+                Atualizar meu progresso
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </>
   );
 }

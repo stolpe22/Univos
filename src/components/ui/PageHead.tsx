@@ -1,10 +1,10 @@
 import { AJUDA } from "@/features/ajuda/conteudo";
-import { ROTA_ADMIN, ROTAS } from "@/lib/rotas";
+import { ROTA_ADMIN, ROTA_PERFIL, ROTAS } from "@/lib/rotas";
 import { TituloComInfo } from "./InfoPagina";
 
 /** O texto do "?" de uma aba, a partir do nome dela (ajuda/conteudo.ts). */
 export function sobreDaPagina(nome: string) {
-  const secao = [...ROTAS, ROTA_ADMIN].find((r) => r.nome === nome)?.ajuda;
+  const secao = [...ROTAS, ROTA_ADMIN, ROTA_PERFIL].find((r) => r.nome === nome)?.ajuda;
   return secao ? AJUDA[secao]?.sobre : undefined;
 }
 

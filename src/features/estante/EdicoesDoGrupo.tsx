@@ -1,9 +1,9 @@
 "use client";
 
 import { useActionState, useRef, useState } from "react";
+import { SituacaoLeitura } from "./SituacaoLeitura";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
-import { Pill } from "@/components/ui/Card";
 import { Field, classesInput } from "@/components/ui/Field";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { useRetornoForm } from "@/components/ui/useRetornoForm";
@@ -16,7 +16,7 @@ import {
   type ProgressoAnterior,
 } from "./actions";
 import type { EdicaoLeitura, LivroEstante } from "./queries";
-import { rotuloStatus, STATUS_LEITURA, type StatusLeitura } from "./taxonomia";
+import { STATUS_LEITURA, type StatusLeitura } from "./taxonomia";
 
 /**
  * Exemplares do grupo: cada pessoa informa as páginas da própria edição e até onde leu.
@@ -65,7 +65,7 @@ function ItemLeitura({ leitura: l, titulo }: { leitura: EdicaoLeitura; titulo: s
       <div className="flex min-w-0 items-center gap-2">
         <Avatar nome={l.nome} cor={l.cor} icone={l.icone} className="size-9 text-sm" />
         <b className="min-w-0 flex-1 break-words">{l.nome}</b>
-        <Pill className="shrink-0">{rotuloStatus(l.status)}</Pill>
+        <SituacaoLeitura status={l.status} />
       </div>
       <div className="flex items-baseline justify-between gap-2 text-sm">
         <span className="text-muted">

@@ -4,16 +4,28 @@ import type { LivroEstante } from "./queries";
 const real = (valor: number) =>
   valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-/** Classificação (tema, tipo, nível) e dados da edição de referência, quando houver. */
-export function MetadadosCatalogo({ livro }: { livro: LivroEstante }) {
+/**
+ * Classificação (tema, tipo, nível) e, com `completo`, os dados da edição de referência e a
+ * descrição. Na lista da Estante só as etiquetas; o resto fica na página do livro.
+ */
+export function MetadadosCatalogo({
+  livro,
+  completo = false,
+}: {
+  livro: LivroEstante;
+  completo?: boolean;
+}) {
   const etiquetas = [livro.temaNome, livro.tipo, livro.nivelNome].filter(Boolean);
-  const edicao = [
-    livro.anoPublicacao,
-    livro.editora,
-    livro.precoReferencia !== null ? real(livro.precoReferencia) : null,
-  ].filter(Boolean);
+  const edicao = completo
+    ? [
+        livro.anoPublicacao,
+        livro.editora,
+        livro.precoReferencia !== null ? real(livro.precoReferencia) : null,
+      ].filter(Boolean)
+    : [];
+  const nota = completo ? livro.nota : null;
 
-  if (etiquetas.length === 0 && edicao.length === 0 && !livro.nota) return null;
+  if (etiquetas.length === 0 && edicao.length === 0 && !nota) return null;
   return (
     <div className="grid gap-1.5 pt-1">
       {etiquetas.length > 0 && (
@@ -23,10 +35,10 @@ export function MetadadosCatalogo({ livro }: { livro: LivroEstante }) {
           ))}
         </div>
       )}
-      {(edicao.length > 0 || livro.nota) && (
+      {(edicao.length > 0 || nota) && (
         <div className="grid gap-1 text-sm text-muted">
           {edicao.length > 0 && <span>{edicao.join(" · ")}</span>}
-          {livro.nota && <span>{livro.nota}</span>}
+          {nota && <span className="whitespace-pre-line">{nota}</span>}
         </div>
       )}
     </div>

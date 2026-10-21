@@ -68,3 +68,14 @@ export function paginaPelaSituacao(
   if (situacao === "nao_lido") return 0;
   return pagina;
 }
+
+/** Selo do comentário: em que ponto da leitura a pessoa estava quando escreveu. */
+export function momentoDoComentario(
+  situacao: "nao_lido" | "lendo" | "lido",
+  pagina: number,
+  paginas: number,
+) {
+  if (situacao === "lido") return "depois de ler";
+  if (situacao === "nao_lido") return "antes de ler";
+  return `lendo · pág. ${pagina} de ${paginas} (${porcentagem(pagina, paginas)}%)`;
+}

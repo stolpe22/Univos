@@ -2,6 +2,10 @@ import { describe, expect, it } from "vitest";
 import type { EdicaoLeitura, LivroEstante } from "./queries";
 import {
   comExemplar,
+  filtrarCatalogo,
+  FILTRO_VAZIO,
+  opcoesCatalogo,
+  type FiltroCatalogo,
   filtrarEstante,
   filtroDaUrl,
   leitores,
@@ -36,6 +40,7 @@ function livro(id: number, status: LivroEstante["status"], extra: Partial<LivroE
     sugeridoPor: null,
     sugeridoPorNome: "alguém",
     votos: [],
+    comentarios: 0,
     tema: null,
     temaNome: null,
     anoPublicacao: null,
@@ -115,5 +120,64 @@ describe("estante", () => {
       { id: "karol", nome: "karol" },
       { id: "lucas", nome: "lucas" },
     ]);
+  });
+});
+
+describe("filtro rápido da lista", () => {
+  const catalogo = [
+    livro(1, "fila", {
+      titulo: "A Riqueza das Nações",
+      autor: "Adam Smith",
+      tema: "eco",
+      temaNome: "Economia",
+      nivel: 2,
+      nivelNome: "Intermediário",
+    }),
+    livro(2, "lido", {
+      titulo: "O Capital",
+      autor: "Karl Marx",
+      tema: "eco",
+      temaNome: "Economia",
+      nivel: 3,
+      nivelNome: "Avançado",
+    }),
+    livro(3, "fila", {
+      titulo: "1984",
+      autor: "George Orwell",
+      tipo: "Romance",
+      nivel: 1,
+      nivelNome: "Iniciante",
+    }),
+  ];
+  const ids = (f: Partial<FiltroCatalogo>) =>
+    filtrarCatalogo(catalogo, { ...FILTRO_VAZIO, ...f }).map((l) => l.id);
+
+  it("acha por título, autor ou tema, sem acento e com várias palavras", () => {
+    expect(ids({ texto: "nacoes" })).toEqual([1]);
+    expect(ids({ texto: "marx" })).toEqual([2]);
+    expect(ids({ texto: "economia smith" })).toEqual([1]);
+    expect(ids({ texto: "  " })).toEqual([1, 2, 3]);
+  });
+
+  it("combina texto com tema, tipo e nível", () => {
+    expect(ids({ tema: "eco" })).toEqual([1, 2]);
+    expect(ids({ tema: "eco", nivel: "3" })).toEqual([2]);
+    expect(ids({ tipo: "Romance", texto: "orwell" })).toEqual([3]);
+  });
+
+  it("filtra pelos livros com ou sem comentários", () => {
+    const comComentario = [{ ...catalogo[0], comentarios: 3 }, catalogo[1], catalogo[2]];
+    const so = (comentarios: string) =>
+      filtrarCatalogo(comComentario, { ...FILTRO_VAZIO, comentarios }).map((l) => l.id);
+    expect(so("com")).toEqual([1]);
+    expect(so("sem")).toEqual([2, 3]);
+    expect(so("")).toEqual([1, 2, 3]);
+  });
+
+  it("os seletores só oferecem o que existe; nível em ordem numérica", () => {
+    const o = opcoesCatalogo(catalogo);
+    expect(o.temas).toEqual([{ valor: "eco", rotulo: "Economia" }]);
+    expect(o.tipos).toEqual([{ valor: "Romance", rotulo: "Romance" }]);
+    expect(o.niveis.map((n) => n.valor)).toEqual(["1", "2", "3"]);
   });
 });

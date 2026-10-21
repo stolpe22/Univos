@@ -47,11 +47,17 @@ export function Sheet({ aberto, aoFechar, titulo, children }: Props) {
           aria-hidden="true"
           className="mx-auto -mt-1.5 mb-3 h-1 w-10 rounded-full bg-line md:hidden"
         />
-        <div className="mb-2 flex items-center justify-between gap-2.5">
-          <h2 id={idTitulo} className="m-0 text-xl font-bold">
+        <div className="mb-2 flex items-start justify-between gap-2.5">
+          <h2 id={idTitulo} className="m-0 min-w-0 text-xl font-bold break-words">
             {titulo}
           </h2>
-          <Button variante="ghost" tamanho="small" onClick={aoFechar}>
+          {/* título longo quebra linha; o Fechar nunca */}
+          <Button
+            variante="ghost"
+            tamanho="small"
+            onClick={aoFechar}
+            className="shrink-0 whitespace-nowrap"
+          >
             Fechar
           </Button>
         </div>

@@ -1,4 +1,4 @@
-export type GrupoResultado = "Páginas" | "Livros" | "Debates" | "Pauta" | "Pessoas" | "Ajuda";
+export type GrupoResultado = "Páginas" | "Livros" | "Debates" | "Pautas" | "Pessoas" | "Ajuda";
 
 export type Resultado = {
   /** Único na lista (ex: "livro-12"). */
@@ -17,7 +17,7 @@ export const ORDEM_GRUPOS: GrupoResultado[] = [
   "Páginas",
   "Livros",
   "Debates",
-  "Pauta",
+  "Pautas",
   "Pessoas",
   "Ajuda",
 ];

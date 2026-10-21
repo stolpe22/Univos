@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { AoVivo } from "@/components/AoVivo";
-import { Card, Pill } from "@/components/ui/Card";
+import { Card } from "@/components/ui/Card";
 import { PageHead } from "@/components/ui/PageHead";
-import { REGRA_DA_CASA } from "@/features/ajuda/conteudo";
+import { AVISO_DEBATE } from "@/features/ajuda/conteudo";
 import { getClubeAtual, podeModerar } from "@/features/clube/queries";
 import { ItemDebate } from "@/features/debates/ItemDebate";
 import { MarcarDebateForm } from "@/features/debates/MarcarDebateForm";
@@ -27,12 +27,8 @@ export default async function DebatesPage({ searchParams }: PageProps<"/debates"
         descricao="Confirme presença, vote na enquete ou marque um novo debate."
       />
 
-      <Card className="mb-3.5">
-        <p className="m-0">
-          <b>Regras da casa:</b> {REGRA_DA_CASA} Fonte é bem-vinda. Nas rodadas, uma pessoa fala por
-          vez e termina com <Pill>FINALIZADO!</Pill>.
-        </p>
-      </Card>
+      {/* um lembrete curto, sem card: a regra do FINALIZADO! fica no formato de cada debate */}
+      <p className="-mt-1.5 mb-3.5 text-sm text-muted">🤝 {AVISO_DEBATE}</p>
 
       <div className="grid gap-3.5 md:grid-cols-2">
         <div className="grid content-start gap-3.5">

@@ -6,7 +6,12 @@ import { getClubeAtual, podeModerar } from "@/features/clube/queries";
 import { DUPLICADO, ERRO_REDE, type EstadoForm, type Resultado } from "@/lib/resultado";
 import { hojeLocal } from "@/lib/datas";
 import { createClient } from "@/lib/supabase/server";
-import { getLivroAtual } from "./queries";
+import {
+  getLivroAtual,
+  listarComentarios,
+  posicionarComentarios,
+  type ComentarioPosicionado,
+} from "./queries";
 import { comentarioSchema, metaSchema, paginaSchema } from "./schemas";
 
 function revalidar() {
@@ -114,7 +119,29 @@ export async function voltarPagina(
   return { ok: true, dados: undefined };
 }
 
-/** Comentário marcado na página atual de quem escreve (base do "sem spoiler"). */
+const idSchema = z.number().int().positive();
+
+/** O que o Desfazer precisa para recolocar um comentário apagado do jeito que era. */
+const comentarioSalvoSchema = z.object({
+  livro_id: idSchema,
+  pagina: z.number().int().min(0),
+  texto: comentarioSchema.shape.texto,
+  situacao: z.enum(["nao_lido", "lendo", "lido"]),
+  paginas_edicao: z.number().int().min(1).max(30000).nullable(),
+});
+type ComentarioSalvo = z.infer<typeof comentarioSalvoSchema>;
+const CAMPOS_COMENTARIO = "livro_id, pagina, texto, situacao, paginas_edicao";
+
+function revalidarComentarios(livroId: number) {
+  revalidatePath("/livro");
+  revalidatePath(`/estante/${livroId}`);
+}
+
+/**
+ * Comenta em qualquer livro do grupo. Guarda como está a leitura de quem escreve agora
+ * (antes de ler, lendo na pág. X, depois de ler): é a base do "sem spoiler" e do selo
+ * que aparece no comentário.
+ */
 export async function comentar(
   _anterior: EstadoForm<"texto">,
   form: FormData,
@@ -122,72 +149,100 @@ export async function comentar(
   const valores = { texto: String(form.get("texto") ?? "") };
   const lido = comentarioSchema.safeParse(valores);
   if (!lido.success) return { ok: false, erros: { texto: lido.error.issues[0]?.message }, valores };
-
+  const livroId = idSchema.safeParse(Number(form.get("livroId")));
   const clube = await getClubeAtual();
-  const livro = clube && (await getLivroAtual(clube.id));
-  if (!clube || !livro)
-    return { ok: false, erros: { geral: "Não tem livro da vez agora." }, valores };
+  if (!livroId.success || !clube) return { ok: false, erros: { geral: ERRO_REDE }, valores };
 
   const supabase = await createClient();
   const { data: progresso } = await supabase
     .from("progresso_leitura")
-    .select("pagina")
-    .eq("livro_id", livro.id)
+    .select("pagina, paginas_edicao, status, edicao_confirmada")
+    .eq("livro_id", livroId.data)
     .eq("user_id", clube.uid)
     .maybeSingle();
+  // sem exemplar cadastrado, o comentário é de quem ainda não leu
+  const comExemplar = progresso?.edicao_confirmada === true;
 
+  // a RLS só deixa comentar em livro do grupo de quem está logado
   const { data, error } = await supabase
     .from("comentarios")
-    .insert({ livro_id: livro.id, pagina: progresso?.pagina ?? 0, texto: lido.data.texto })
+    .insert({
+      livro_id: livroId.data,
+      pagina: comExemplar ? progresso.pagina : 0,
+      paginas_edicao: comExemplar ? progresso.paginas_edicao : null,
+      situacao: comExemplar ? progresso.status : "nao_lido",
+      texto: lido.data.texto,
+    })
     .select("id")
     .single();
   if (error || !data) return { ok: false, erros: { geral: ERRO_REDE }, valores };
 
-  revalidatePath("/livro");
+  revalidarComentarios(livroId.data);
   return { ok: true, mensagem: "Comentário publicado.", desfazer: data.id };
 }
 
-const idSchema = z.number().int().positive();
-
 /** Apaga o próprio comentário. Devolve o conteúdo para o Desfazer recolocar. */
-export async function apagarComentario(
-  id: number,
-): Promise<Resultado<{ livro_id: number; pagina: number; texto: string }>> {
+export async function apagarComentario(id: number): Promise<Resultado<ComentarioSalvo>> {
   if (!idSchema.safeParse(id).success) return { ok: false, erro: ERRO_REDE };
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("comentarios")
     .delete()
     .eq("id", id)
-    .select("livro_id, pagina, texto")
+    .select(CAMPOS_COMENTARIO)
     .single();
   if (error || !data) return { ok: false, erro: "Não deu pra apagar agora. Tente de novo." };
-  revalidatePath("/livro");
-  return { ok: true, dados: data as { livro_id: number; pagina: number; texto: string } };
+  const salvo = data as ComentarioSalvo;
+  revalidarComentarios(salvo.livro_id);
+  return { ok: true, dados: salvo };
+}
+
+/**
+ * Comentários de um livro para a prévia (só leitura) que abre no card da Estante.
+ * Carrega só quando a pessoa abre a prévia; a RLS limita aos livros do grupo dela.
+ */
+export async function verComentarios(livroId: number): Promise<Resultado<ComentarioPosicionado[]>> {
+  if (!idSchema.safeParse(livroId).success) return { ok: false, erro: ERRO_REDE };
+  const supabase = await createClient();
+  const [comentarios, { data: livro }, { data: edicoes }] = await Promise.all([
+    listarComentarios(livroId),
+    supabase.from("livros").select("paginas").eq("id", livroId).maybeSingle(),
+    supabase
+      .from("progresso_leitura")
+      .select("user_id, paginas_edicao")
+      .eq("livro_id", livroId)
+      .eq("edicao_confirmada", true),
+  ]);
+  if (!livro) return { ok: false, erro: "Não deu pra abrir os comentários agora." };
+  const porPessoa = (edicoes ?? []).map((e) => ({
+    id: e.user_id as string,
+    paginasEdicao: e.paginas_edicao as number,
+  }));
+  return { ok: true, dados: posicionarComentarios(comentarios, porPessoa, livro.paginas) };
 }
 
 /** Desfazer de publicar (apaga) ou de apagar (recoloca). */
 export async function desfazerComentario(
-  acao: { apagar: number } | { recolocar: { livro_id: number; pagina: number; texto: string } },
+  acao: { apagar: number } | { recolocar: ComentarioSalvo },
 ): Promise<Resultado> {
   const supabase = await createClient();
   if ("apagar" in acao) {
     if (!idSchema.safeParse(acao.apagar).success) return { ok: false, erro: ERRO_REDE };
-    const { error } = await supabase.from("comentarios").delete().eq("id", acao.apagar);
-    if (error) return { ok: false, erro: ERRO_REDE };
+    const { data, error } = await supabase
+      .from("comentarios")
+      .delete()
+      .eq("id", acao.apagar)
+      .select("livro_id")
+      .single();
+    if (error || !data) return { ok: false, erro: ERRO_REDE };
+    revalidarComentarios(data.livro_id as number);
   } else {
-    const lido = z
-      .object({
-        livro_id: idSchema,
-        pagina: z.number().int().min(0),
-        texto: comentarioSchema.shape.texto,
-      })
-      .safeParse(acao.recolocar);
+    const lido = comentarioSalvoSchema.safeParse(acao.recolocar);
     if (!lido.success) return { ok: false, erro: ERRO_REDE };
     const { error } = await supabase.from("comentarios").insert(lido.data);
     if (error) return { ok: false, erro: ERRO_REDE };
+    revalidarComentarios(lido.data.livro_id);
   }
-  revalidatePath("/livro");
   return { ok: true, dados: undefined };
 }
 

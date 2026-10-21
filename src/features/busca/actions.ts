@@ -12,7 +12,7 @@ type Linha = { tipo: string; id: string; titulo: string; detalhe: string | null 
 const DESTINO: Record<string, (l: Linha) => { grupo: GrupoResultado; href: string }> = {
   livro: (l) => ({
     grupo: "Livros",
-    href: l.detalhe?.endsWith("livro da vez") ? "/livro" : `/estante#livro-${l.id}`,
+    href: l.detalhe?.endsWith("livro da vez") ? "/livro" : `/estante/${l.id}`,
   }),
   debate: (l) => ({ grupo: "Debates", href: `/debates#debate-${l.id}` }),
   tema: (l) => ({ grupo: "Pautas", href: `/pauta#tema-${l.id}` }),

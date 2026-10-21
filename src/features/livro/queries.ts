@@ -130,6 +130,10 @@ export type Comentario = {
   /** Página na edição de quem escreveu (era a página dela ao comentar). */
   pagina: number;
   texto: string;
+  /** Como estava a leitura de quem comentou quando escreveu (antes, lendo, depois). */
+  situacao: "nao_lido" | "lendo" | "lido";
+  /** Total da edição de quem comentou, na hora. Null nos comentários antigos. */
+  paginasEdicao: number | null;
   autor: string;
   autorNome: string;
   autorCor: Pessoa["cor"];
@@ -137,22 +141,23 @@ export type Comentario = {
   criadoEm: string;
 };
 
-/** Comentários do livro, em ordem de página. */
+/** Comentários do livro, do mais antigo ao mais novo (antes de ler vem antes de depois). */
 export async function listarComentarios(livroId: number): Promise<Comentario[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("comentarios")
     .select(
-      "id, pagina, texto, criado_em, user_id, perfis!comentarios_user_id_fkey(nome, cor, icone_avatar)",
+      "id, pagina, texto, situacao, paginas_edicao, criado_em, user_id, perfis!comentarios_user_id_fkey(nome, cor, icone_avatar)",
     )
     .eq("livro_id", livroId)
-    .order("pagina")
     .order("criado_em");
 
   type Linha = {
     id: number;
     pagina: number;
     texto: string;
+    situacao: Comentario["situacao"];
+    paginas_edicao: number | null;
     criado_em: string;
     user_id: string;
     perfis: { nome: string; cor: Pessoa["cor"]; icone_avatar: IconePerfil | "" } | null;
@@ -161,6 +166,8 @@ export async function listarComentarios(livroId: number): Promise<Comentario[]> 
     id: c.id,
     pagina: c.pagina,
     texto: c.texto,
+    situacao: c.situacao,
+    paginasEdicao: c.paginas_edicao,
     autor: c.user_id,
     autorNome: c.perfis?.nome ?? "alguém que saiu",
     autorCor: c.perfis?.cor ?? "slate",
@@ -178,17 +185,17 @@ export type ComentarioPosicionado = Comentario & {
 
 /**
  * Situa cada comentário no livro usando a edição de quem escreveu, para comparar com a
- * posição de quem lê (spoiler) mesmo com edições diferentes. Se a pessoa saiu do grupo
- * ou não cadastrou edição, vale a edição de referência.
+ * posição de quem lê (spoiler) mesmo com edições diferentes. Vale a edição guardada no
+ * comentário; nos antigos, a edição atual da pessoa ou a de referência.
  */
 export function posicionarComentarios(
   comentarios: Comentario[],
-  progresso: ProgressoPessoa[],
+  edicoes: { id: string; paginasEdicao: number }[],
   paginasReferencia: number,
 ): ComentarioPosicionado[] {
-  const edicao = new Map(progresso.map((p) => [p.id, p.paginasEdicao]));
+  const edicao = new Map(edicoes.map((p) => [p.id, p.paginasEdicao]));
   return comentarios.map((c) => {
-    const total = edicao.get(c.autor) ?? paginasReferencia;
+    const total = c.paginasEdicao ?? edicao.get(c.autor) ?? paginasReferencia;
     return { ...c, posicao: posicao(c.pagina, total), paginasEdicaoAutor: total };
   });
 }

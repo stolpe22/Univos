@@ -18,7 +18,7 @@ export const ROTAS: Rota[] = [
   { href: "/debates", nome: "Debates", icone: "mic", ajuda: "debates" },
   { href: "/mapa", nome: "Mapa político", icone: "compass", ajuda: "mapa" },
   { href: "/estante", nome: "Estante", icone: "shelf", ajuda: "estante" },
-  { href: "/meus-livros", nome: "Meus livros", icone: "shelf", ajuda: "estante" },
+  { href: "/meus-livros", nome: "Meus livros", icone: "shelf", ajuda: "meus-livros" },
   { href: "/pauta", nome: "Pauta", nomeSubaba: "Pautas", icone: "vote", ajuda: "pauta" },
   { href: "/membros", nome: "Membros", icone: "users", ajuda: "membros" },
 ];
@@ -26,8 +26,16 @@ export const ROTAS: Rota[] = [
 /** Só aparece para o dono do sistema, no fim da lista (em "Mais" no celular). */
 export const ROTA_ADMIN: Rota = { href: "/admin", nome: "Admin", icone: "shield", ajuda: "admin" };
 
+/** Fora das seções (abre pela foto no topo ou por Mais), mas tem título e ajuda próprios. */
+export const ROTA_PERFIL: Rota = {
+  href: "/meu-perfil",
+  nome: "Meu perfil",
+  icone: "users",
+  ajuda: "meu-perfil",
+};
+
 export function rotaAtual(pathname: string): Rota | undefined {
-  return [...ROTAS, ROTA_ADMIN].find(
+  return [...ROTAS, ROTA_ADMIN, ROTA_PERFIL].find(
     (r) => pathname === r.href || pathname.startsWith(r.href + "/"),
   );
 }

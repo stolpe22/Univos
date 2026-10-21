@@ -1,34 +1,43 @@
 "use client";
 
 import { useActionState, useRef, useState, useTransition } from "react";
+import { BotaoApagar } from "@/components/ui/BotaoApagar";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Field, classesInput } from "@/components/ui/Field";
 import { useToast } from "@/components/ui/Toast";
 import { useRetornoForm } from "@/components/ui/useRetornoForm";
+import { SituacaoLeitura } from "@/features/estante/SituacaoLeitura";
 import type { EstadoForm } from "@/lib/resultado";
 import { apagarComentario, comentar, desfazerComentario } from "./actions";
 import type { ComentarioPosicionado } from "./queries";
-import { ehSpoiler } from "./regras";
+import { ehSpoiler, momentoDoComentario } from "./regras";
+
+/** Como está a minha leitura agora: é o que vai marcado no meu comentário novo. */
+export type MinhaLeitura = {
+  situacao: "nao_lido" | "lendo" | "lido";
+  pagina: number;
+  paginas: number;
+};
 
 type Props = {
+  livroId: number;
   comentarios: ComentarioPosicionado[];
-  /** Página de quem lê, na edição dela (marca o comentário novo). */
-  minhaPagina: number;
+  minha: MinhaLeitura;
   /** Quanto do livro quem lê já leu, de 0 a 1 (base do "sem spoiler"). */
   minhaPosicao: number;
   eu: string;
 };
 
 /** Comentários sem spoiler: escondidos se foram escritos num ponto do livro depois do seu. */
-export function Comentarios({ comentarios, minhaPagina, minhaPosicao, eu }: Props) {
+export function Comentarios({ livroId, comentarios, minha, minhaPosicao, eu }: Props) {
   const [revelados, setRevelados] = useState<Set<number>>(new Set());
 
   return (
     <>
       <p className="mt-0 mb-1 text-[13px] text-muted">
-        Comentários de trechos depois de onde você está ficam escondidos, mesmo que a edição de quem
-        escreveu seja diferente da sua.
+        Cada comentário mostra se a pessoa escreveu antes de ler, lendo ou depois de ler. Os de
+        trechos depois de onde você está ficam escondidos, mesmo com edições diferentes.
       </p>
       {comentarios.length === 0 ? (
         <p className="px-2 py-4 text-center text-muted">
@@ -47,7 +56,7 @@ export function Comentarios({ comentarios, minhaPagina, minhaPosicao, eu }: Prop
           ))}
         </ul>
       )}
-      <NovoComentario minhaPagina={minhaPagina} />
+      <NovoComentario livroId={livroId} minha={minha} />
     </>
   );
 }
@@ -83,21 +92,14 @@ function ItemComentario({
     <li className="flex items-start gap-2.5 py-3">
       <Avatar nome={c.autorNome} cor={c.autorCor} icone={c.autorIcone || null} />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center justify-between gap-2">
-          <small className="text-muted">
-            {c.autorNome} · pág. {c.pagina} de {c.paginasEdicaoAutor} ({Math.round(c.posicao * 100)}
-            % do livro)
-          </small>
-          {meu && (
-            <button
-              type="button"
-              onClick={apagar}
-              disabled={apagando}
-              className="min-h-11 cursor-pointer px-2 text-sm font-semibold text-accent underline disabled:opacity-40"
-            >
-              Apagar
-            </button>
-          )}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 pt-1">
+            <small className="font-semibold">{c.autorNome}</small>
+            <SituacaoLeitura
+              status={c.situacao}
+              rotulo={momentoDoComentario(c.situacao, c.pagina, c.paginasEdicaoAutor)}
+            />
+          </div>
         </div>
         {escondido ? (
           <div className="mt-1 rounded-lg bg-accent-soft px-2.5 py-2 text-[13.5px]">
@@ -114,11 +116,12 @@ function ItemComentario({
           <p className="m-0 whitespace-pre-line">{c.texto}</p>
         )}
       </div>
+      {meu && <BotaoApagar rotulo="Apagar meu comentário" onClick={apagar} disabled={apagando} />}
     </li>
   );
 }
 
-function NovoComentario({ minhaPagina }: { minhaPagina: number }) {
+function NovoComentario({ livroId, minha }: { livroId: number; minha: MinhaLeitura }) {
   const [estado, acao, publicando] = useActionState<EstadoForm<"texto">, FormData>(comentar, null);
   const [tamanho, setTamanho] = useState(0);
   const form = useRef<HTMLFormElement>(null);
@@ -130,8 +133,9 @@ function NovoComentario({ minhaPagina }: { minhaPagina: number }) {
 
   return (
     <form ref={form} action={acao} noValidate className="mt-3 grid gap-2">
+      <input type="hidden" name="livroId" value={livroId} />
       <Field
-        label={`Seu comentário (marcado na pág. ${minhaPagina})`}
+        label={`Seu comentário (vai marcado: ${momentoDoComentario(minha.situacao, minha.pagina, minha.paginas)})`}
         hint={`${tamanho}/500 caracteres`}
         erro={erro}
       >
@@ -142,7 +146,9 @@ function NovoComentario({ minhaPagina }: { minhaPagina: number }) {
             rows={3}
             maxLength={500}
             enterKeyHint="send"
-            placeholder="O que achou até aqui?"
+            placeholder={
+              minha.situacao === "nao_lido" ? "O que espera do livro?" : "O que achou até aqui?"
+            }
             defaultValue={estado && !estado.ok ? estado.valores.texto : ""}
             onChange={(e) => setTamanho(e.target.value.length)}
             className={classesInput}

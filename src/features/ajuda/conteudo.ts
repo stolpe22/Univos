@@ -13,6 +13,10 @@ export type SecaoAjuda = {
 };
 
 /** A regra de convivência do grupo. Aparece no Mapa, nos perfis e na Ajuda. */
+/** Lembrete curto no topo de Debates. */
+export const AVISO_DEBATE =
+  "Respeito sempre: discorde da ideia, não da pessoa. E traga fatos e fontes pra conversa.";
+
 export const REGRA_DA_CASA =
   "Aqui todo mundo expõe o que pensa. O errado não é ter opinião, é menosprezar ou julgar quem pensa diferente.";
 
@@ -123,6 +127,26 @@ export const AJUDA: Record<string, SecaoAjuda> = {
           "Quem marcou o debate ou quem modera pode iniciar e encerrar. Iniciar só marca o debate como em andamento no Uni-vos; não abre chamada nem transmissão. Encerrar abre a votação de depois.",
       },
       {
+        pergunta: "O que tem na página de um debate?",
+        resposta:
+          "Toque no tema ou em Abrir debate, na agenda, para ver a página dele: presença, enquete com as outras conclusões e comentários. O link dessa página é o que vai no Compartilhar.",
+      },
+      {
+        pergunta: "Como comento num debate?",
+        resposta:
+          "Na página do debate, escreva em Comentários e envie. Dá pra apagar o seu comentário; se foi engano, toque em Desfazer.",
+      },
+      {
+        pergunta: "O que são as outras conclusões?",
+        resposta:
+          "Quando a enquete principal não dá conta, qualquer pessoa pode sugerir outra conclusão. O grupo vota Concordo ou Discordo em cada uma, separado do antes e depois da enquete.",
+      },
+      {
+        pergunta: "O que é virada?",
+        resposta:
+          "É quem mudou de posição entre o voto de antes e o de depois do debate. O card do debate mostra quantas viradas teve.",
+      },
+      {
         pergunta: "Como compartilho um debate?",
         resposta:
           "Use Compartilhar no WhatsApp ou Copiar link no card do debate. Quem abrir o link vai direto para ele; precisa entrar na conta e fazer parte do grupo para votar.",
@@ -179,9 +203,29 @@ export const AJUDA: Record<string, SecaoAjuda> = {
           "Não. Sugerir só coloca o livro na estante. Votar (▲ Votar) é dizer que você quer ler: os livros que o grupo ainda não leu ficam em ordem de votos. Se quiser ler o que você mesmo sugeriu, vote nele também.",
       },
       {
+        pergunta: "Cada livro tem uma página própria?",
+        resposta:
+          "Tem. Toque no título do livro na Estante, em Minha biblioteca ou na busca. Lá estão os dados do livro, quem tem e quem leu, os exemplares do grupo e os comentários.",
+      },
+      {
+        pergunta: "Posso comentar num livro que ainda não li?",
+        resposta:
+          "Pode, em qualquer livro da estante. O comentário guarda como estava sua leitura na hora: antes de ler, lendo (com a página) ou depois de ler. Se você comentar antes e de novo depois, os dois aparecem, cada um com o seu selo.",
+      },
+      {
+        pergunta: "Como acho um livro rápido na lista?",
+        resposta:
+          "Digite em Filtrar livros: vale título, autor, tema, tipo, nível e editora, sem precisar de acento. Em Mais filtros dá pra escolher tema, tipo, nível e se o livro tem comentários. O filtro vale em Todos, O grupo leu e Eu li; toque em Limpar filtros pra ver tudo de novo.",
+      },
+      {
         pergunta: "O que são as bolinhas no canto de cada livro?",
         resposta:
-          "São as pessoas daquele livro: ao lado do ✓ quem já leu, ao lado do 📖 quem está lendo. Isso vem do que cada uma marcou no próprio exemplar, em Exemplares e progresso do grupo.",
+          "São as pessoas daquele livro: ao lado do ✓ quem já leu, ao lado do 📖 quem está lendo. Isso vem do que cada uma marcou no próprio exemplar, em Exemplares e progresso do grupo, na página do livro.",
+      },
+      {
+        pergunta: "O que é o 💬 com número no livro?",
+        resposta:
+          "É quantos comentários o livro tem. No computador, passe o mouse em cima para ler uma prévia; no celular, toque nele. A prévia é só leitura e esconde o que for spoiler pra você; pra comentar, abra o livro.",
       },
       {
         pergunta: "Como sugiro um livro?",
@@ -191,12 +235,49 @@ export const AJUDA: Record<string, SecaoAjuda> = {
       {
         pergunta: "Como registro meu exemplar e meu progresso?",
         resposta:
-          "Na estante, abra Exemplares e progresso do grupo no livro e informe o total de páginas da sua edição, a página atual e a situação. O grupo verá esses dados; eles são diferentes da estimativa da edição de referência.",
+          "Toque no título do livro na Estante, abra Exemplares e progresso do grupo e informe o total de páginas da sua edição, a página atual e a situação. O grupo verá esses dados; eles são diferentes da estimativa da edição de referência.",
       },
       {
         pergunta: "Posso tirar um livro da estante?",
         resposta:
           "Sim, se foi você que sugeriu (ou se você modera o grupo) e o grupo ainda não leu. Toque em Tirar da estante; se foi engano, toque em Desfazer.",
+      },
+    ],
+  },
+  "meus-livros": {
+    titulo: "Meus livros",
+    sobre:
+      "Sua biblioteca: os livros da estante que você tem. Cadastre seu exemplar com as páginas da sua edição e acompanhe sua leitura; o grupo vê seu progresso.",
+    perguntas: [
+      {
+        pergunta: "Como coloco um livro na minha biblioteca?",
+        resposta:
+          "Em Adicionar à minha biblioteca, busque o título ou o autor e escolha o livro. Informe as páginas da sua edição, a página em que está e a situação, e toque em Salvar meu progresso.",
+      },
+      {
+        pergunta: "Não achei o livro na busca. E agora?",
+        resposta:
+          "A busca procura nos livros da Estante deste grupo. Use Não encontrou o livro? › Cadastrar livro na estante; depois ele aparece na busca para você registrar seu exemplar.",
+      },
+      {
+        pergunta: "Tocar em Eu tenho este livro já cadastra?",
+        resposta:
+          "Não. Só abre o formulário. O exemplar só é registrado quando você toca em Salvar meu progresso; se desistir, nada fica gravado.",
+      },
+      {
+        pergunta: "A página e a situação mudam sozinhas?",
+        resposta:
+          "Sim. Escolher Já li leva a página ao total da sua edição, e Ainda não comecei volta para 0. Digitar a última página muda a situação para Já li; uma página no meio vira Estou lendo.",
+      },
+      {
+        pergunta: "Como acho um livro na minha biblioteca?",
+        resposta:
+          "Digite em Filtrar livros (título, autor, tema…) e, em Mais filtros, escolha a situação, o tema, o tipo, o nível ou só os livros com comentários. As situações têm cor própria: ✓ Já li em verde, 📖 Estou lendo em azul e ○ Ainda não comecei sem cor.",
+      },
+      {
+        pergunta: "Quem vê minha biblioteca?",
+        resposta:
+          "As pessoas do grupo: seus exemplares e seu progresso aparecem na Estante, em Quem está lendo do Livro da vez e no seu perfil em Membros.",
       },
     ],
   },
@@ -208,6 +289,21 @@ export const AJUDA: Record<string, SecaoAjuda> = {
       {
         pergunta: "Para que serve a pauta?",
         resposta: "Para sugerir e votar temas de debate.",
+      },
+      {
+        pergunta: "Como proponho um tema?",
+        resposta:
+          "Escreva o tema e toque em Propor tema. Propor já conta o seu voto nele; se não quiser, toque no voto para tirar.",
+      },
+      {
+        pergunta: "Como voto num tema?",
+        resposta:
+          "Toque no botão de voto do tema. Os temas mais votados ficam em cima. Toque de novo para tirar o voto.",
+      },
+      {
+        pergunta: "Posso tirar um tema da pauta?",
+        resposta:
+          "Sim, se foi você que propôs ou se você modera o grupo. Toque em Tirar da pauta; se foi engano, toque em Desfazer.",
       },
       {
         pergunta: "Como transformo um tema em debate?",
@@ -286,7 +382,7 @@ export const AJUDA: Record<string, SecaoAjuda> = {
   admin: {
     titulo: "Admin",
     sobre:
-      "Só o dono do sistema vê esta página: criar grupos, escolher quem modera cada um e ver a auditoria dos convites.",
+      "Só o dono do sistema vê esta página: criar grupos, escolher quem modera cada um e ver a auditoria dos convites. O dono também é quem acrescenta temas, tipos e níveis ao catálogo de livros.",
     perguntas: [
       {
         pergunta: "Quem vê a aba Admin?",
@@ -296,7 +392,17 @@ export const AJUDA: Record<string, SecaoAjuda> = {
       {
         pergunta: "O que um moderador pode fazer?",
         resposta:
-          "Gerar e desativar links de convite do grupo dele e ver quem entrou por cada link. Pra tornar alguém moderador, abra o grupo em Admin e toque em Tornar moderador.",
+          "No grupo dele: gerar e desativar links de convite e ver quem entrou por cada um, aprovar ou recusar enquetes, iniciar e encerrar debates, definir a meta de leitura, terminar o livro da vez e começar o próximo, e tirar livros e temas sugeridos. Pra tornar alguém moderador, abra o grupo em Admin e toque em Tornar moderador.",
+      },
+      {
+        pergunta: "Como crio um grupo?",
+        resposta:
+          "Em Admin, preencha o nome em Criar grupo. Depois escolha quem modera e gere o primeiro link de convite.",
+      },
+      {
+        pergunta: "Como acrescento tema, tipo ou nível ao catálogo?",
+        resposta:
+          "Só o dono faz isso. Ao sugerir um livro, abra Classificação e dados do catálogo e toque em + Criar ao lado do campo.",
       },
       {
         pergunta: "O que fica na auditoria?",

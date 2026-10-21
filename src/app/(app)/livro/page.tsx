@@ -139,8 +139,13 @@ export default async function LivroPage() {
         </div>
         <Card titulo="Comentários sem spoiler" id="comentarios">
           <Comentarios
+            livroId={livro.id}
             comentarios={posicionarComentarios(comentarios, progresso, livro.paginas)}
-            minhaPagina={eu?.pagina ?? 0}
+            minha={{
+              situacao: eu?.statusLeitura ?? "nao_lido",
+              pagina: eu?.pagina ?? 0,
+              paginas: eu?.paginasEdicao ?? livro.paginas,
+            }}
             minhaPosicao={eu?.posicao ?? 0}
             eu={clube.uid}
           />

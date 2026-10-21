@@ -1,13 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { useTransition, type ReactNode } from "react";
 import { BotaoVoto } from "@/components/ui/BotaoVoto";
 import { Pill } from "@/components/ui/Card";
 import { Capa } from "@/components/ui/Capa";
 import { useToast } from "@/components/ui/Toast";
 import { EscolherLivro } from "@/features/livro/EscolherLivro";
+import { PreviaComentarios } from "@/features/livro/PreviaComentarios";
+import { posicao } from "@/features/livro/regras";
 import { tirarDaEstante, voltarParaEstante, votarLivro } from "./actions";
-import { EdicoesDoGrupo } from "./EdicoesDoGrupo";
 import { MetadadosCatalogo } from "./MetadadosCatalogo";
 import type { LivroEstante } from "./queries";
 import { QuemLeu } from "./QuemLeu";
@@ -65,6 +67,7 @@ function ItemEstante({
   const { toast } = useToast();
   const [tirando, startTransition] = useTransition();
   const temExemplar = comExemplar(l);
+  const minha = l.leituras.find((x) => x.userId === eu);
 
   function tirar() {
     startTransition(async () => {
@@ -80,15 +83,20 @@ function ItemEstante({
   }
 
   return (
-    <li id={`livro-${l.id}`} className="scroll-mt-28 py-3">
+    <li id={`livro-${l.id}`} className="scroll-mt-28 py-4">
       {/* em cima: capa, título e o que se vê de relance; embaixo, na largura toda, os detalhes */}
       <div className="flex items-start gap-2.5">
         <Capa id={l.id} titulo={l.titulo} pequena />
         <div className="min-w-0 flex-1">
-          <b>
-            {maisVotado && <span aria-label="Mais votado">🥇 </span>}
-            {l.titulo}
-          </b>
+          <Link
+            href={`/estante/${l.id}`}
+            className="inline-flex min-h-11 items-center font-bold text-ink underline decoration-line underline-offset-4"
+          >
+            <span>
+              {maisVotado && <span aria-label="Mais votado">🥇 </span>}
+              {l.titulo}
+            </span>
+          </Link>
           <div className="text-[13.5px] text-muted">
             {l.autor} · {l.paginas} págs. · sugerido por{" "}
             {l.sugeridoPor === eu ? "você" : l.sugeridoPorNome}
@@ -103,8 +111,25 @@ function ItemEstante({
             </div>
           )}
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-2">
+        <div className="shrink-0">
           <QuemLeu livro={l} eu={eu} />
+        </div>
+      </div>
+      {/* embaixo, numa linha: etiquetas à esquerda; comentários e voto à direita */}
+      <div className="mt-2 flex flex-wrap items-end justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <MetadadosCatalogo livro={l} />
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          {l.comentarios > 0 && (
+            <PreviaComentarios
+              livroId={l.id}
+              titulo={l.titulo}
+              total={l.comentarios}
+              minhaPosicao={minha ? posicao(minha.pagina, minha.paginas) : 0}
+              eu={eu}
+            />
+          )}
           {l.status === "fila" && (
             <BotaoVoto
               rotulo={l.titulo}
@@ -115,8 +140,6 @@ function ItemEstante({
           )}
         </div>
       </div>
-      <MetadadosCatalogo livro={l} />
-      <EdicoesDoGrupo livro={l} eu={eu} />
       {(podeEscolher || podeTirar) && (
         <div className="mt-2 flex flex-wrap items-center gap-2">
           {podeEscolher && (

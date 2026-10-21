@@ -1,13 +1,19 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { Alternador } from "@/components/ui/Alternador";
 import { Card } from "@/components/ui/Card";
 import { classesInput } from "@/components/ui/Field";
+import { FiltroLivros } from "./FiltroLivros";
 import { ListaEstante } from "./ListaEstante";
 import type { LivroEstante, TaxonomiaCatalogo } from "./queries";
 import {
+  filtrarCatalogo,
   filtrarEstante,
+  FILTRO_VAZIO,
+  opcoesCatalogo,
+  OPCOES_COMENTARIOS,
   filtroDaUrl,
   leitores,
   naoLidosPorVoto,
@@ -41,7 +47,11 @@ export function EstanteFiltrada({
   const contar = (f: FiltroEstante) => filtrarEstante(livros, f).length;
   const ir = (f: FiltroEstante) => window.history.pushState(null, "", urlDoFiltro(f));
 
-  const visiveis = filtrarEstante(livros, filtro);
+  // texto e classificação valem em todas as visões (Todos, O grupo leu, Eu li)
+  const [catalogo, setCatalogo] = useState(FILTRO_VAZIO);
+  const opcoes = opcoesCatalogo(livros);
+  const porVisao = filtrarEstante(livros, filtro);
+  const visiveis = filtrarCatalogo(porVisao, catalogo);
   const pessoa = filtro.tipo === "grupo" ? filtro.pessoa : undefined;
   const tudo = filtro.tipo === "grupo" && !!filtro.tudo;
   const situacao = (filtro.tipo === "grupo" && filtro.situacao) || "leu";
@@ -59,15 +69,17 @@ export function EstanteFiltrada({
             : `O que ${nome(pessoa)} ${verbo} com o grupo`;
 
   const vazio =
-    filtro.tipo === "todos"
-      ? "A estante está vazia. Toque em + Sugerir livro, no topo, para colocar o primeiro."
-      : filtro.tipo === "eu"
-        ? "Você ainda não marcou nenhum livro como lido. Abra Exemplares e progresso do grupo num livro e escolha “Já li”."
-        : !pessoa
-          ? "O grupo ainda não terminou nenhum livro. Quando quem modera tocar em Terminamos este livro, ele aparece aqui."
-          : tudo
-            ? "Nenhum livro nessa situação. Tente Os dois."
-            : "Nenhum livro do grupo nessa situação. Veja em Tudo, que inclui o que a pessoa leu por conta própria.";
+    porVisao.length > 0
+      ? "Nenhum livro com esses filtros. Mude o texto ou toque em Limpar filtros."
+      : filtro.tipo === "todos"
+        ? "A estante está vazia. Toque em + Sugerir livro, no topo, para colocar o primeiro."
+        : filtro.tipo === "eu"
+          ? "Você ainda não marcou nenhum livro como lido. Toque no título de um livro, abra Exemplares e progresso do grupo e escolha “Já li”."
+          : !pessoa
+            ? "O grupo ainda não terminou nenhum livro. Quando quem modera tocar em Terminamos este livro, ele aparece aqui."
+            : tudo
+              ? "Nenhum livro nessa situação. Tente Os dois."
+              : "Nenhum livro do grupo nessa situação. Veja em Tudo, que inclui o que a pessoa leu por conta própria.";
 
   return (
     <>
@@ -151,6 +163,25 @@ export function EstanteFiltrada({
       )}
 
       <Card titulo={titulo} id="estante">
+        {porVisao.length > 0 && (
+          <FiltroLivros
+            valores={catalogo}
+            aoMudar={(chave, valor) => setCatalogo((atual) => ({ ...atual, [chave]: valor }))}
+            mostrando={visiveis.length}
+            total={porVisao.length}
+            seletores={[
+              { chave: "tema", rotulo: "Tema", todos: "Todos", opcoes: opcoes.temas },
+              { chave: "tipo", rotulo: "Tipo", todos: "Todos", opcoes: opcoes.tipos },
+              { chave: "nivel", rotulo: "Nível", todos: "Todos", opcoes: opcoes.niveis },
+              {
+                chave: "comentarios",
+                rotulo: "Comentários",
+                todos: "Todos",
+                opcoes: OPCOES_COMENTARIOS,
+              },
+            ]}
+          />
+        )}
         <ListaEstante
           livros={visiveis}
           eu={eu}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SituacaoLeitura } from "@/features/estante/SituacaoLeitura";
 import { notFound } from "next/navigation";
 import { Avatar } from "@/components/ui/Avatar";
 import { classesBotao } from "@/components/ui/Button";
@@ -10,7 +11,6 @@ import { REGRA_DA_CASA } from "@/features/ajuda/conteudo";
 import { getClubeAtual } from "@/features/clube/queries";
 import { listarDebates } from "@/features/debates/queries";
 import { listarEstante } from "@/features/estante/queries";
-import { rotuloStatus } from "@/features/estante/taxonomia";
 import { porcentagem } from "@/features/livro/regras";
 import { rotulo } from "@/features/mapa/afirmacoes";
 import { Bussola, Escala } from "@/features/mapa/Bussola";
@@ -185,7 +185,7 @@ export default async function PerfilPage({ params }: PageProps<"/membros/[id]">)
                       <span>
                         <b>{l.titulo}</b> <span className="text-muted">— {l.autor}</span>
                       </span>
-                      <Pill>{rotuloStatus(leitura.status)}</Pill>
+                      <SituacaoLeitura status={leitura.status} />
                     </div>
                     <span className="text-[13px] text-muted">
                       pág. {leitura.pagina} de {leitura.paginas} ·{" "}

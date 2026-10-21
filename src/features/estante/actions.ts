@@ -54,7 +54,7 @@ function paraLivroApp(livro: Record<string, unknown>): z.infer<typeof livroSchem
 }
 
 function revalidar() {
-  revalidatePath("/estante");
+  revalidatePath("/estante", "layout"); // a Estante e a página de cada livro
   revalidatePath("/meus-livros");
   revalidatePath("/livro");
 }
@@ -224,7 +224,7 @@ export type ProgressoAnterior = {
 } | null;
 
 function revalidarLeituraPessoal() {
-  revalidatePath("/estante");
+  revalidatePath("/estante", "layout"); // a Estante e a página de cada livro
   revalidatePath("/meus-livros");
   revalidatePath("/livro");
   revalidatePath("/inicio");

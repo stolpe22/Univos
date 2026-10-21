@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { AjudaSheet } from "@/features/ajuda/AjudaSheet";
 import { BuscaGlobal } from "@/features/busca/BuscaGlobal";
-import { ROTA_ADMIN, rotaAtual, SECAO_ADMIN, SECOES, secaoDe } from "@/lib/rotas";
+import { ROTA_ADMIN, ROTA_PERFIL, rotaAtual, SECAO_ADMIN, SECOES, secaoDe } from "@/lib/rotas";
 import { BarraInferior } from "./shell/BarraInferior";
 import { Cabecalho, IndicadorCarregando, type UsuarioShell } from "./shell/Cabecalho";
 import { MenuMais, TrocarGrupoSheet } from "./shell/Menus";
@@ -95,7 +95,7 @@ export function AppShell({ usuario, grupo, grupos, dono, children }: Props) {
       <BarraInferior
         secoes={SECOES}
         atual={secao}
-        atualNoMais={atual === ROTA_ADMIN || navegacao.rotaExibida.startsWith("/meu-perfil")}
+        atualNoMais={atual === ROTA_ADMIN || atual === ROTA_PERFIL}
         nomeNoMais={atual === ROTA_ADMIN ? ROTA_ADMIN.nome : undefined}
         navegacao={navegacao}
         aoAbrirMais={() => setJanela("mais")}

@@ -54,9 +54,9 @@ docs/ux/heuristicas-e-mobile.md  # guia completo de Nielsen + WCAG 2.2 + mobile
 |---|---|---|
 | Início | `/inicio` | Resumo: livro da vez, meta da semana, próximo debate (ou ao vivo), convite ao mapa político, progresso do grupo |
 | Livro da vez | `/livro` | Atualizar página (0 a total, botões ±10), progresso do grupo em tempo real, comentários marcados com página e **sem spoiler** (escondidos se a página do comentário > página de quem lê, com "Mostrar mesmo assim") |
-| Debates | `/debates` | Agenda, confirmar presença, marcar debate (data no futuro), regra da casa "FINALIZADO!" fixada |
+| Debates | `/debates` | Agenda, confirmar presença, marcar debate (data no futuro), lembrete curto de respeito e fatos no topo (a regra do "FINALIZADO!" aparece no formato de cada debate) |
 | Mapa político | `/mapa` | 40 afirmações, escala de 5 pontos, 2 eixos (economia e costumes), pausa e retoma, resultado com rótulo e mapa do grupo |
-| Estante | `/estante` | Fila com votação (mais votado vira o próximo), sugerir livro (sem duplicado), já lidos |
+| Estante | `/estante` | Estante única (nenhum livro sai), votação, sugerir livro (sem duplicado), filtros (Todos · O grupo leu · Eu li, texto, tema/tipo/nível, comentários). O grupo combina o próximo e quem modera toca em "Começar como livro da vez". Cada livro tem página (`/estante/<id>`) com exemplares e comentários marcados com a situação de quem escreveu (antes de ler, lendo, depois de ler) |
 | Pauta | `/pauta` | Propor e votar temas, botão "Virar debate" que preenche o formulário de Debates |
 | Membros | `/membros` | Card de cada pessoa com sugestões, debates e rótulo do mapa |
 

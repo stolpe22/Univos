@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   ehSpoiler,
+  momentoDoComentario,
   paginaPelaSituacao,
   passo,
   porcentagem,
@@ -80,5 +81,13 @@ describe("formulário do exemplar: página e situação andam juntas", () => {
     expect(paginaPelaSituacao("lido", 120, 312)).toBe(312);
     expect(paginaPelaSituacao("nao_lido", 120, 312)).toBe(0);
     expect(paginaPelaSituacao("lendo", 120, 312)).toBe(120);
+  });
+});
+
+describe("selo do comentário", () => {
+  it("diz se foi escrito antes, durante ou depois da leitura", () => {
+    expect(momentoDoComentario("nao_lido", 0, 300)).toBe("antes de ler");
+    expect(momentoDoComentario("lendo", 120, 300)).toBe("lendo · pág. 120 de 300 (40%)");
+    expect(momentoDoComentario("lido", 300, 300)).toBe("depois de ler");
   });
 });

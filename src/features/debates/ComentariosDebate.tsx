@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useRef, useState, useTransition } from "react";
+import { BotaoApagar } from "@/components/ui/BotaoApagar";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Field, classesInput } from "@/components/ui/Field";
@@ -71,19 +72,10 @@ function ItemComentario({
           <small className="text-muted">
             {c.autorNome} · {formatarData(c.criadoEm)}
           </small>
-          {meu && (
-            <button
-              type="button"
-              onClick={apagar}
-              disabled={apagando}
-              className="min-h-11 cursor-pointer px-2 text-sm font-semibold text-accent underline disabled:opacity-40"
-            >
-              Apagar
-            </button>
-          )}
         </div>
         <p className="m-0 whitespace-pre-line">{c.texto}</p>
       </div>
+      {meu && <BotaoApagar rotulo="Apagar meu comentário" onClick={apagar} disabled={apagando} />}
     </li>
   );
 }

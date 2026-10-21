@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import type { CorPerfil, IconePerfil } from "@/components/ui/Avatar";
 import { createClient } from "@/lib/supabase/server";
 import { naoLidosPorVoto } from "./regras";
@@ -25,6 +26,8 @@ export type LivroEstante = {
   sugeridoPor: string | null;
   sugeridoPorNome: string;
   votos: string[];
+  /** Quantos comentários o livro tem (o card mostra 💬 e a prévia). */
+  comentarios: number;
   tema: TemaLivro | null;
   temaNome: string | null;
   anoPublicacao: number | null;
@@ -59,15 +62,26 @@ export async function listarTaxonomia(): Promise<TaxonomiaCatalogo> {
 
 /** Todos os livros do grupo, do mais antigo ao mais novo. */
 export async function listarEstante(clubeId: string): Promise<LivroEstante[]> {
+  return carregarLivros(clubeId);
+}
+
+/** Um livro do grupo (página do livro), com votos, exemplares e progresso. */
+export const getLivroEstante = cache(
+  async (clubeId: string, livroId: number): Promise<LivroEstante | null> =>
+    (await carregarLivros(clubeId, livroId))[0] ?? null,
+);
+
+async function carregarLivros(clubeId: string, livroId?: number): Promise<LivroEstante[]> {
   const supabase = await createClient();
+  let consulta = supabase
+    .from("livros")
+    .select(
+      "id, titulo, autor, paginas, status, sugerido_por, tema, ano_publicacao, editora, preco_referencia, nivel, tipo, nota",
+    )
+    .eq("clube_id", clubeId);
+  if (livroId !== undefined) consulta = consulta.eq("id", livroId);
   const [{ data, error }, taxonomia] = await Promise.all([
-    supabase
-      .from("livros")
-      .select(
-        "id, titulo, autor, paginas, status, sugerido_por, tema, ano_publicacao, editora, preco_referencia, nivel, tipo, nota",
-      )
-      .eq("clube_id", clubeId)
-      .order("criado_em"),
+    consulta.order("criado_em"),
     listarTaxonomia(),
   ]);
 
@@ -99,10 +113,11 @@ export async function listarEstante(clubeId: string): Promise<LivroEstante[]> {
   const linhas = (data ?? []) as Linha[];
   const ids = linhas.map((livro) => livro.id);
   let votos: Voto[] = [];
+  let comentarios: { livro_id: number }[] = [];
   let progressos: Progresso[] = [];
 
   if (ids.length > 0) {
-    const [resultadoVotos, resultadoProgressos] = await Promise.all([
+    const [resultadoVotos, resultadoProgressos, resultadoComentarios] = await Promise.all([
       supabase.from("votos_livro").select("livro_id, user_id").in("livro_id", ids),
       supabase
         .from("progresso_leitura")
@@ -110,6 +125,7 @@ export async function listarEstante(clubeId: string): Promise<LivroEstante[]> {
           "livro_id, user_id, pagina, paginas_edicao, edicao_confirmada, status, atualizado_em",
         )
         .in("livro_id", ids),
+      supabase.from("comentarios").select("livro_id").in("livro_id", ids),
     ]);
 
     if (resultadoVotos.error) {
@@ -126,6 +142,8 @@ export async function listarEstante(clubeId: string): Promise<LivroEstante[]> {
     }
 
     votos = (resultadoVotos.data ?? []) as Voto[];
+    // sem a contagem o card só não mostra o 💬; não vale derrubar a Estante por isso
+    comentarios = (resultadoComentarios.data ?? []) as { livro_id: number }[];
 
     if (!resultadoProgressos.error) {
       progressos = (resultadoProgressos.data ?? []) as Progresso[];
@@ -236,6 +254,7 @@ export async function listarEstante(clubeId: string): Promise<LivroEstante[]> {
     sugeridoPor: l.sugerido_por,
     sugeridoPorNome: (l.sugerido_por && nomesPerfis.get(l.sugerido_por)?.nome) ?? "alguém que saiu",
     votos: votosPorLivro.get(l.id) ?? [],
+    comentarios: comentarios.filter((c) => c.livro_id === l.id).length,
     tema: l.tema,
     temaNome: l.tema ? (temas.get(l.tema) ?? null) : null,
     anoPublicacao: l.ano_publicacao,
