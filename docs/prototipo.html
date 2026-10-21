@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7b3fe4">
+<title>Uni-vos</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!--
+=====================================================================
+ PROTÓTIPO — Clube do Livro & Debates
+ Roda sozinho em "modo demo" (dados em memória).
+ Para ligar no Supabase: preencha SUPABASE_URL e SUPABASE_ANON_KEY
+ lá embaixo e rode o SQL abaixo no SQL Editor do Supabase.
+
+ -- SCHEMA SUGERIDO -------------------------------------------------
+ create table profiles (id uuid primary key references auth.users, nome text, avatar_cor text);
+ create table books (id bigint generated always as identity primary key,
+   titulo text not null, autor text, paginas int, sugerido_por uuid references profiles,
+   status text default 'fila',  -- fila | atual | lido
+   created_at timestamptz default now());
+ create table book_votes (book_id bigint references books, user_id uuid references profiles,
+   primary key (book_id, user_id));
+ create table reading_progress (book_id bigint references books, user_id uuid references profiles,
+   pagina int not null, updated_at timestamptz default now(), primary key (book_id, user_id));
+ create table comments (id bigint generated always as identity primary key,
+   book_id bigint references books, user_id uuid references profiles,
+   pagina int, texto text, created_at timestamptz default now());
+ create table debates (id bigint generated always as identity primary key,
+   tema text, data timestamptz, formato text, criado_por uuid references profiles);
+ create table rsvps (debate_id bigint references debates, user_id uuid references profiles,
+   primary key (debate_id, user_id));
+ create table topics (id bigint generated always as identity primary key,
+   tema text, proposto_por uuid references profiles, created_at timestamptz default now());
+ create table topic_votes (topic_id bigint references topics, user_id uuid references profiles,
+   primary key (topic_id, user_id));
+ create table quiz_answers (user_id uuid references profiles, q int, valor int check (valor between 1 and 5),
+   primary key (user_id, q));
+ create table quiz_results (user_id uuid primary key references profiles,
+   economia int, costumes int, updated_at timestamptz default now());  -- de -100 a 100
+ -- Ative RLS em todas e crie policies: leitura para authenticated,
+ -- escrita só onde user_id = auth.uid().
+=====================================================================
+-->
+<!--
+ HEURÍSTICAS DE NIELSEN aplicadas (referência rápida para o time):
+ 1 Visibilidade do estado ... aba atual destacada (topo e barra inferior), título da aba no navegador,
+                              toasts após cada ação, "Enviando…" no login, barra de progresso no quiz,
+                              data da última atualização de leitura.
+ 2 Mundo real ............... linguagem do grupo (sem "OTP", "RSVP"): "link de acesso", "Vou participar".
+ 3 Controle e liberdade ..... "Desfazer" em toda ação, botão Voltar/Pausar no quiz, Esc fecha janelas,
+                              voltar do navegador funciona (rotas por #), spoiler pode ser revelado.
+ 4 Consistência ............. mesmo nome da aba = título da página; botão principal sempre em degradê,
+                              secundário sempre contornado; logo leva ao Início.
+ 5 Prevenção de erros ....... limites nos campos (página 0–N, data no futuro), livro/tema duplicado barrado,
+                              confirmação antes de apagar as respostas do quiz.
+ 6 Reconhecimento ........... rótulos sempre visíveis (não só placeholder), "sua página" mostrada onde importa,
+                              quiz mostra a resposta marcada ao voltar.
+ 7 Flexibilidade ............ atalhos 1–5 e ← no quiz, botões ±10 páginas, "Virar debate" a partir da pauta,
+                              Enter envia formulários.
+ 8 Minimalismo .............. uma tarefa principal por card; nada decorativo dentro dos fluxos.
+ 9 Erros .................... mensagens em vermelho, em português claro, dizendo como resolver.
+10 Ajuda .................... botão Ajuda com busca, abrindo já na seção da página atual.
+ Mobile: barra inferior com áreas de toque ≥ 44px, campos com fonte 16px (sem zoom no iOS),
+ respeito à área segura (notch) e janelas que sobem da parte de baixo.
+-->
+<style>
+:root{
+  --blue:#2f5bea;--red:#dc2626;--purple:#7b3fe4;
+  --grad:linear-gradient(120deg,var(--blue) 0%,var(--purple) 45%,var(--red) 92%);
+  --bg:#f4f2fb;--card:#fff;--ink:#1d1a2e;--muted:#5f5a7a;--line:#e2ddf0;
+  --accent:#6a2fd6;--accent-soft:#ece4fd;--ok:#1f8a5b;--err:#c81e1e;--radius:16px;--navh:64px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f0d1a;--card:#1a1729;--ink:#ece9f8;--muted:#a9a4c4;--line:#2e2a45;
+  --accent:#b08cff;--accent-soft:#2a2146;--err:#ff6b6b;}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+h1,h2,h3{font-family:Fraunces,serif;line-height:1.2;margin:0 0 .35em}
+h1{font-size:clamp(24px,4vw,32px)}
+button{font:inherit;font-weight:600;cursor:pointer;border:0;border-radius:12px;padding:.6em 1.1em;min-height:44px;color:#fff;background:var(--grad);background-size:200% 100%;transition:transform .15s,box-shadow .2s,background-position .4s,opacity .2s}
+button:active{transform:scale(.97)}
+@media(hover:hover){button:hover{background-position:100% 0;box-shadow:0 6px 18px #7b3fe440}}
+button.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line);box-shadow:none}
+@media(hover:hover){button.ghost:hover{border-color:var(--accent);color:var(--accent);box-shadow:none}}
+button.small{min-height:38px;padding:.35em .85em;font-size:13.5px}
+button.link{background:none;color:var(--accent);text-decoration:underline;padding:0 .2em;min-height:0;box-shadow:none;font-size:inherit}
+button:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+input,select,textarea{font:inherit;font-size:16px;width:100%;padding:.65em .85em;border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);min-height:46px}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
+[aria-invalid="true"]{border-color:var(--err)!important}
+.field{display:grid;gap:6px}
+.field>label{font-weight:600;font-size:14px}
+.err{color:var(--err);font-weight:600;font-size:13.5px}
+.err:not(:empty)::before{content:"⚠ "}
+.err:empty{display:none}
+.hint{color:var(--muted);font-size:13px}
+.muted{color:var(--muted)}
+kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 5px;font-size:12px;font-family:inherit}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;transition:transform .2s,box-shadow .2s}
+@media(hover:hover){.card:hover{transform:translateY(-2px);box-shadow:0 10px 30px #2f5bea14}}
+.row{display:flex;gap:10px;align-items:center}
+.wrap{flex-wrap:wrap}.between{justify-content:space-between}
+.grid{display:grid;gap:14px}
+@media(min-width:760px){.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:700}
+.live{animation:blink 1.4s infinite}@keyframes blink{50%{opacity:.45}}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--grad);transform-origin:left;animation:grow .9s cubic-bezier(.2,.8,.2,1) both}
+@keyframes grow{from{transform:scaleX(0)}}
+.av{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:13px;flex:none}
+.cover{width:76px;height:110px;border-radius:8px;display:flex;align-items:flex-end;padding:7px;color:#fff;font-family:Fraunces,serif;font-size:12.5px;line-height:1.1;flex:none;box-shadow:0 4px 12px #0003;background-image:linear-gradient(160deg,#ffffff26,#0004)}
+.cover.sm{width:40px;height:58px;font-size:0;padding:0}
+.list>*+*{border-top:1px solid var(--line)}
+.item{padding:12px 0}
+.empty{text-align:center;color:var(--muted);padding:16px 8px;margin:0}
+.page-head{margin-bottom:14px}.page-head p{margin:0;color:var(--muted)}
+.hero{border-radius:var(--radius);padding:20px;color:#fff;background:var(--grad);background-size:200% 200%;animation:shift 12s ease infinite;margin-bottom:14px}
+.hero h1,.hero .big{color:#fff}.hero p{color:#ffffffe6;margin:0}
+@keyframes shift{50%{background-position:100% 100%}}
+.stepper{display:grid;grid-template-columns:64px 1fr 64px;gap:6px}
+.stepper input{text-align:center;font-weight:700}
+.spoiler-box{background:var(--accent-soft);border-radius:10px;padding:8px 10px;font-size:13.5px;margin-top:4px}
+.steps{padding-left:20px;margin:6px 0 10px}.steps li{margin:4px 0}
+
+/* ---------- login ---------- */
+#login{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:16px;position:relative;overflow:hidden;background:#0d0b18;transition:opacity .45s,transform .45s}
+#login.leaving{opacity:0;transform:scale(1.05)}
+.blob{position:absolute;width:55vmax;height:55vmax;border-radius:50%;filter:blur(80px);opacity:.6;mix-blend-mode:screen;pointer-events:none}
+.b1{background:var(--blue);left:-20vmax;top:-15vmax;animation:drift1 14s ease-in-out infinite alternate}
+.b2{background:var(--red);right:-20vmax;bottom:-15vmax;animation:drift2 16s ease-in-out infinite alternate}
+.b3{background:var(--purple);left:25%;top:25%;width:35vmax;height:35vmax;animation:pulse 8s ease-in-out infinite}
+@keyframes drift1{to{transform:translate(25vmax,18vmax)}}
+@keyframes drift2{to{transform:translate(-25vmax,-18vmax)}}
+@keyframes pulse{50%{transform:scale(1.3);opacity:.8}}
+.gridbg{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(#ffffff0d 1px,transparent 1px),linear-gradient(90deg,#ffffff0d 1px,transparent 1px);background-size:44px 44px;-webkit-mask-image:radial-gradient(circle at center,#000 30%,transparent 75%);mask-image:radial-gradient(circle at center,#000 30%,transparent 75%)}
+.glass{position:relative;width:100%;max-width:390px;background:#ffffff14;border:1px solid #ffffff2e;color:#fff;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 20px 60px #0008;border-radius:22px;padding:24px 20px;animation:rise .8s cubic-bezier(.2,.8,.2,1) both}
+.glass .center{text-align:center}
+.glass .field>label{color:#fff}
+.glass input{background:#ffffff17;border-color:#ffffff38;color:#fff}
+.glass input::placeholder{color:#ffffff8c}
+.glass .hint{color:#ffffffb3}
+.glass .err{color:#ffb4b4}
+.glass button.ghost{color:#fff;border-color:#ffffff4d}
+.brand{font-family:Fraunces,serif;font-size:36px;margin:6px 0 0}
+.logo{width:86px;height:86px;animation:spinIn 1.2s cubic-bezier(.2,.8,.2,1) both,float 5s ease-in-out 1.2s infinite}
+@keyframes spinIn{from{transform:rotate(-200deg) scale(.3);opacity:0}}
+@keyframes float{50%{transform:translateY(-6px)}}
+@keyframes rise{from{opacity:0;transform:translateY(24px)}}
+.tag{display:flex;justify-content:center;gap:6px;margin:10px 0 6px;font-size:12px}
+.tag span{padding:2px 10px;border-radius:99px;font-weight:700}
+.divider{display:flex;align-items:center;gap:10px;color:#ffffff99;font-size:13px}
+.divider::before,.divider::after{content:"";flex:1;border-top:1px solid #ffffff33}
+.notice{border-radius:12px;padding:10px 12px;font-size:14px}
+.notice.ok{background:#1f8a5b40;border:1px solid #2fbf7f80}
+.notice.warn{background:#f59e0b33;border:1px solid #f59e0b80}
+
+/* ---------- app ---------- */
+#app{animation:fadeIn .5s both}
+@keyframes fadeIn{from{opacity:0}}
+header{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding-top:env(safe-area-inset-top)}
+header::after{content:"";display:block;height:3px;background:var(--grad)}
+.top{max-width:1040px;margin:auto;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.brandbtn{background:none;color:var(--ink);padding:0;min-height:44px;display:flex;align-items:center;gap:10px;box-shadow:none!important}
+.brandbtn .logo{width:34px;height:34px;animation:none}
+.brandname{font-family:Fraunces,serif;font-size:22px;font-weight:700;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.topnav{max-width:1040px;margin:auto;padding:0 16px 8px;display:flex;gap:4px;overflow-x:auto}
+.topnav button{background:transparent;color:var(--muted);min-height:40px;box-shadow:none;white-space:nowrap}
+.topnav button[aria-current="page"]{background:var(--accent-soft);color:var(--accent)}
+.iconbtn{background:transparent;color:var(--ink);border:1.5px solid var(--line);padding:0 .75em;display:inline-flex;gap:6px;align-items:center;box-shadow:none!important}
+.ico{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+main{max-width:1040px;margin:auto;padding:18px 16px 60px}
+#view>*{animation:rise .45s cubic-bezier(.2,.8,.2,1) both}
+#view>*:nth-child(2){animation-delay:.05s}#view>*:nth-child(3){animation-delay:.1s}#view>*:nth-child(4){animation-delay:.15s}
+.bottomnav{display:none}
+@media(max-width:759px){
+  .topnav,.hide-sm{display:none!important}
+  main{padding:14px 14px calc(var(--navh) + 28px + env(safe-area-inset-bottom))}
+  .card{padding:16px}
+  .bottomnav{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -6px 20px #0000000f}
+  .bottomnav button{background:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;font-weight:600;min-height:var(--navh);border-radius:0;padding:6px 2px;box-shadow:none;line-height:1.15}
+  .bottomnav button[aria-current="page"]{color:var(--accent)}
+  .bottomnav button[aria-current="page"] .ico{stroke-width:2.6}
+  .bottomnav button[aria-current="page"]::before{content:"";position:absolute;top:0;width:28px;height:3px;border-radius:0 0 3px 3px;background:var(--grad)}
+  .bottomnav button{position:relative}
+  .toast{bottom:calc(var(--navh) + 12px + env(safe-area-inset-bottom))!important}
+}
+
+/* ---------- toast e janelas ---------- */
+.toast{position:fixed;left:50%;bottom:20px;transform:translate(-50%,16px);background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:12px;display:flex;gap:14px;align-items:center;opacity:0;pointer-events:none;transition:.25s;z-index:60;width:max-content;max-width:calc(100% - 28px);box-shadow:0 8px 24px #0004;font-size:14px}
+.toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast button{background:none;color:var(--bg);text-decoration:underline;font-weight:700;min-height:36px;padding:0 4px;box-shadow:none}
+.backdrop{position:fixed;inset:0;background:#0008;z-index:50;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .2s}
+.sheet{background:var(--card);color:var(--ink);width:100%;max-width:560px;max-height:85vh;overflow:auto;border-radius:20px 20px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom));animation:up .3s cubic-bezier(.2,.8,.2,1)}
+.sheet::before{content:"";display:block;width:40px;height:4px;border-radius:99px;background:var(--line);margin:-6px auto 12px}
+@media(min-width:760px){.backdrop{align-items:center}.sheet{border-radius:20px}.sheet::before{display:none}}
+@keyframes up{from{transform:translateY(40px);opacity:0}}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.menu-item{width:100%;background:transparent;color:var(--ink);display:flex;gap:14px;align-items:center;border-radius:12px;min-height:54px;box-shadow:none!important;font-size:16px}
+.menu-item[aria-current="page"],.menu-item:hover{background:var(--accent-soft);color:var(--accent)}
+details.help{border-bottom:1px solid var(--line);padding:8px 0}
+details.help summary{cursor:pointer;font-weight:600;min-height:36px;display:flex;align-items:center}
+
+/* ---------- mapa político ---------- */
+.stmt{font-size:clamp(20px,3vw,28px);margin:8px 0 20px;min-height:2.5em}
+.likert{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.lk{background:var(--card);color:var(--ink);border:1.5px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 8px;font-weight:500;box-shadow:none}
+.lk b{font-size:18px;white-space:nowrap}.lk span{font-size:12.5px;color:var(--muted)}
+@media(hover:hover){.lk:hover{border-color:var(--accent);box-shadow:0 6px 18px #7b3fe433}}
+.lk[aria-pressed="true"]{background:var(--grad);color:#fff;border-color:transparent}.lk[aria-pressed="true"] span{color:#fffd}
+@media(max-width:640px){.likert{grid-template-columns:1fr}.lk{flex-direction:row;justify-content:flex-start;gap:14px;min-height:52px;padding:10px 16px}.lk b{width:24px}.lk span{font-size:15px;color:inherit}}
+.scale{position:relative;height:10px;border-radius:99px;margin:10px 0 4px}
+.scale.econ{background:linear-gradient(90deg,var(--red),var(--purple),var(--blue))}
+.scale.soc{background:linear-gradient(90deg,#c9b6ff,#7b3fe4,#2c2357)}
+.scale i{position:absolute;top:50%;width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid var(--ink);transform:translate(-50%,-50%);box-shadow:0 2px 8px #0004}
+.ends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.compass{width:100%;max-width:420px;display:block;margin:auto;color:var(--ink)}
+.compass .pt{animation:pop .6s .3s cubic-bezier(.2,1.6,.4,1) both;transform-box:fill-box;transform-origin:center}
+@keyframes pop{from{transform:scale(0)}}
+.big{font-family:Fraunces,serif;font-size:clamp(26px,4vw,38px);margin:4px 0}
+.confetti{position:fixed;width:8px;height:12px;top:-12px;z-index:70;animation:fall 1.4s ease-in forwards;pointer-events:none}
+@keyframes fall{to{transform:translateY(105vh) rotate(720deg)}}
+@media (prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2f5bea"/><stop offset=".5" stop-color="#7b3fe4"/><stop offset="1" stop-color="#dc2626"/>
+    </linearGradient>
+    <!-- Logo: foice + martelo, com o cabo do martelo formando o traço do cifrão -->
+    <symbol id="logo" viewBox="0 0 64 64">
+      <circle cx="32" cy="32" r="31" fill="url(#lg)"/>
+      <path d="M17 42 A18 18 0 1 1 47 22" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".9"/>
+      <path d="M17 42 l-5 6" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+      <rect x="24" y="11" width="16" height="7" rx="2" fill="#fff"/>
+      <path d="M32 18 V53" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>
+      <path d="M39 25 C37 21 25 20 25 27 C25 34 39 30 39 38 C39 45 27 45 24 40" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- ============ LOGIN ============ -->
+<section id="login">
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="gridbg"></div>
+  <div class="glass">
+    <div class="center">
+      <svg class="logo" role="img" aria-label="Logo Uni-vos"><use href="#logo"/></svg>
+      <h1 class="brand">Uni-vos</h1>
+      <div class="tag" aria-hidden="true"><span style="background:var(--blue)">tese</span><span style="background:var(--red)">antítese</span><span style="background:var(--purple)">síntese</span></div>
+      <p class="hint" style="margin:0 0 16px">Esquerda, direita e quem tá no meio: uni-vos.<br>Clube do livro &amp; debates.</p>
+    </div>
+    <form class="grid" style="gap:10px" onsubmit="loginEmail(event)" novalidate>
+      <div class="field">
+        <label for="email">Seu email</label>
+        <input id="email" type="email" autocomplete="email" inputmode="email" placeholder="nome@gmail.com" aria-describedby="email-err email-hint">
+        <small class="hint" id="email-hint">Enviamos um link de acesso. Não precisa de senha.</small>
+        <small class="err" id="email-err" role="alert"></small>
+      </div>
+      <button type="submit" id="loginBtn">Receber link de acesso</button>
+    </form>
+    <div class="grid" style="gap:10px;margin-top:10px">
+      <button class="ghost" onclick="loginGoogle()">Entrar com Google</button>
+      <div id="loginMsg" class="notice" role="status" hidden></div>
+      <div class="divider">ou</div>
+      <button class="ghost" onclick="enterDemo()">Explorar no modo demonstração</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ APP ============ -->
+<section id="app" hidden>
+  <header>
+    <div class="top">
+      <button class="brandbtn" onclick="go('inicio')" aria-label="Uni-vos, ir para o Início"><svg class="logo" aria-hidden="true"><use href="#logo"/></svg><span class="brandname">Uni-vos</span></button>
+      <div class="row" id="topright"></div>
+    </div>
+    <nav class="topnav" id="topnav" aria-label="Seções"></nav>
+  </header>
+  <main id="view" tabindex="-1"></main>
+  <nav class="bottomnav" id="bottomnav" aria-label="Seções"></nav>
+</section>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ---------- CONFIG SUPABASE ---------- */
+const SUPABASE_URL = "";      // ex: https://xxxx.supabase.co
+const SUPABASE_ANON_KEY = ""; // chave anon pública
+const sb = (SUPABASE_URL && SUPABASE_ANON_KEY) ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+/* ---------- DADOS DEMO (troque por queries no Supabase) ---------- */
+const S = {
+  me:null,
+  members:[{id:1,nome:"Lucas",cor:"#2f5bea"},{id:2,nome:"Karol",cor:"#dc2626"},{id:3,nome:"Joju",cor:"#7b3fe4"},{id:4,nome:"Convidado",cor:"#475569"}],
+  books:[
+    {id:1,titulo:"Freakonomics",autor:"Levitt & Dubner",paginas:320,status:"atual",votos:[1,2],cor:"#7b3fe4",por:1},
+    {id:2,titulo:"Sapiens",autor:"Yuval N. Harari",paginas:464,status:"fila",votos:[2,3],cor:"#2f5bea",por:2},
+    {id:3,titulo:"O Príncipe",autor:"Maquiavel",paginas:144,status:"fila",votos:[3],cor:"#b91c1c",por:3},
+    {id:4,titulo:"1984",autor:"George Orwell",paginas:416,status:"lido",votos:[1,2,3],cor:"#3a2f6a",por:1}],
+  progress:{1:{1:140,2:96,3:180,4:20}}, progressAt:{},
+  meta:{ate:160,prazo:"domingo"},
+  comments:[
+    {id:1,livro:1,user:2,pag:60,texto:"O capítulo dos professores trapaceando é absurdo kkk"},
+    {id:2,livro:1,user:3,pag:150,texto:"Esse capítulo do aborto e crime dá um debate inteiro."},
+    {id:3,livro:1,user:2,pag:175,texto:"Discordo do método deles aqui, depois falo."}],
+  revealed:{},
+  debates:[
+    {id:1,tema:"Aborto: biologia vs. saúde pública",data:"2026-10-19T15:17",formato:"Rodada com FINALIZADO!",rsvp:[1,2,3],status:"rolando"},
+    {id:2,tema:"Penas mais pesadas para crimes hediondos",data:"2026-10-26T20:00",formato:"Rodada com FINALIZADO!",rsvp:[3],status:"agendado"},
+    {id:3,tema:"Debate do livro: Freakonomics",data:"2026-11-02T20:00",formato:"Clube do livro",rsvp:[1,2],status:"agendado"}],
+  topics:[{id:1,tema:"Educação sexual nas escolas",votos:[1,2]},{id:2,tema:"Pena de morte",votos:[3]},{id:3,tema:"Legalização das drogas",votos:[1]}],
+  results:{}, prefill:""
+};
+
+/* ---------- MAPA POLÍTICO ----------
+   [afirmação, eixo ('e' economia, 's' costumes), direção (+1 direita/conservador, -1 esquerda/progressista)] */
+const QUIZ = [
+ ["Saúde e educação deveriam ser oferecidas só pelo Estado, sem setor privado.","e",-1],
+ ["O Estado deve controlar setores estratégicos, como petróleo e energia.","e",-1],
+ ["Grandes fortunas deveriam pagar um imposto especial.","e",-1],
+ ["O salário mínimo deveria subir acima da inflação todo ano.","e",-1],
+ ["Programas de transferência de renda, como o Bolsa Família, deveriam ser ampliados.","e",-1],
+ ["Os direitos trabalhistas deveriam ser mais fortes, mesmo que isso encareça a contratação.","e",-1],
+ ["O lucro de grandes empresas deveria ser mais taxado.","e",-1],
+ ["Terras improdutivas deveriam ser desapropriadas para reforma agrária.","e",-1],
+ ["O Estado deve intervir na economia para reduzir a desigualdade, mesmo que o crescimento seja menor.","e",-1],
+ ["Bancos e serviços essenciais funcionariam melhor se fossem públicos.","e",-1],
+ ["Privatizar estatais costuma melhorar a qualidade dos serviços.","e",1],
+ ["Cortar impostos gera mais empregos do que ampliar programas sociais.","e",1],
+ ["O livre mercado distribui recursos melhor do que o governo.","e",1],
+ ["Abrir e tocar um negócio deveria ter bem menos burocracia e regulação.","e",1],
+ ["Quem trabalha e arrisca mais deve ganhar mais, e a desigualdade que resulta disso é justa.","e",1],
+ ["O governo deveria cortar gastos para equilibrar as contas, mesmo em áreas sociais.","e",1],
+ ["Vouchers para estudar em escola privada são uma boa alternativa à escola pública.","e",1],
+ ["Flexibilizar as leis trabalhistas ajuda a criar empregos.","e",1],
+ ["O agronegócio deveria ter mais liberdade para expandir a produção.","e",1],
+ ["Sindicatos atrapalham mais do que ajudam o trabalhador.","e",1],
+ ["O aborto deveria ser descriminalizado até a 12ª semana.","s",-1],
+ ["Casais do mesmo sexo devem ter os mesmos direitos de adoção que os demais.","s",-1],
+ ["O uso recreativo da maconha deveria ser legalizado.","s",-1],
+ ["A escola deve ensinar educação sexual, incluindo prevenção de abuso e contraceptivos.","s",-1],
+ ["Cotas raciais nas universidades são necessárias para corrigir desigualdades históricas.","s",-1],
+ ["A religião não deveria influenciar leis e políticas públicas.","s",-1],
+ ["Prender mais gente não resolve a criminalidade; o foco deveria ser prevenção.","s",-1],
+ ["Questões de gênero devem ser discutidas abertamente nas escolas.","s",-1],
+ ["Imigrantes e refugiados devem ser acolhidos com facilidade.","s",-1],
+ ["O Estado deve garantir direitos de pessoas trans, como o uso do nome social.","s",-1],
+ ["A família tradicional é a base da sociedade e deve ser protegida pelo Estado.","s",1],
+ ["Penas para crimes hediondos deveriam ser bem mais duras.","s",1],
+ ["A maioridade penal deveria ser reduzida para 16 anos.","s",1],
+ ["O cidadão comum deveria ter mais facilidade para ter arma em casa.","s",1],
+ ["Valores religiosos são importantes para a moral de um país.","s",1],
+ ["Educação sexual e temas de gênero são responsabilidade da família, não da escola.","s",1],
+ ["O aborto deveria continuar proibido, exceto nos casos já previstos em lei.","s",1],
+ ["A polícia deveria ter mais liberdade para agir contra o crime.","s",1],
+ ["As drogas devem continuar proibidas, inclusive a maconha.","s",1],
+ ["Patriotismo e tradições nacionais deveriam ser mais valorizados nas escolas.","s",1],
+];
+const ORDER = QUIZ.map((_,i)=>i).sort(()=>Math.random()-.5);
+const LK = ["Discordo totalmente","Discordo","Neutro","Concordo","Concordo plenamente"];
+const Q = {started:false,i:0,ans:{},done:false,busy:false};
+
+/* ---------- ÍCONES E ROTAS ---------- */
+const IC = {
+  home:"M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z",
+  book:"M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5zM4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5",
+  mic:"M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3zM5 11a7 7 0 0 0 14 0M12 18v3",
+  compass:"M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM15.5 8.5l-2 5-5 2 2-5z",
+  more:"M5 12h.01M12 12h.01M19 12h.01",
+  shelf:"M4 4h4v16H4zM10 4h4v16h-4zM16 5.5l3.5-1 3 14.5-3.5 1z",
+  vote:"M4 20h16M7 16V10M12 16V5M17 16v-4",
+  users:"M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 20a6 6 0 0 1 12 0M16 5a3 3 0 0 1 0 6M21 20a6 6 0 0 0-4-5.6",
+  help:"M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14M12 17h.01",
+  out:"M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H4"
+};
+const ico = (n,extra="") => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" ${extra}><path d="${IC[n]}"/></svg>`;
+const ROUTES = [["inicio","Início","home"],["livro","Livro da vez","book"],["debates","Debates","mic"],["perfil","Mapa político","compass"],["estante","Estante","shelf"],["pauta","Pauta","vote"],["membros","Membros","users"]];
+let tab = "inicio";
+
+/* ---------- HELPERS ---------- */
+const $ = s => document.querySelector(s);
+const esc = t => String(t??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const M = id => S.members.find(m=>m.id===id) || {nome:"?",cor:"#999"};
+const av = m => `<span class="av" style="background:${m.cor}" title="${esc(m.nome)}" aria-hidden="true">${esc(m.nome[0])}</span>`;
+const cur = () => S.books.find(b=>b.status==="atual");
+const myPage = () => (S.progress[cur()?.id]||{})[S.me.id]||0;
+const fmt = d => new Date(d).toLocaleString("pt-BR",{weekday:"short",day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"});
+const cover = (b,cls="") => `<div class="cover ${cls}" style="background-color:${b.cor}" aria-hidden="true">${esc(b.titulo)}</div>`;
+const head = (t,d) => `<div class="page-head"><h1>${t}</h1>${d?`<p>${d}</p>`:""}</div>`;
+const fld = (id,label,input,hint="") => `<div class="field"><label for="${id}">${label}</label>${input}${hint?`<small class="hint" id="${id}-hint">${hint}</small>`:""}<small class="err" id="${id}-err" role="alert"></small></div>`;
+function setErr(id,m){ const i=$("#"+id), e=$("#"+id+"-err"); if(e) e.textContent=m||""; if(i) i.setAttribute("aria-invalid", m?"true":"false"); }
+function showErrs(ids,errs){ ids.forEach(id=>setErr(id,errs[id])); const f=ids.find(id=>errs[id]); if(f) $("#"+f).focus(); return !!f; }
+function toggle(arr,id){ const i=arr.indexOf(id); i<0?arr.push(id):arr.splice(i,1); return i<0; }
+
+let toastT;
+function toast(text, undo){
+  const t=$("#toast"); t.innerHTML=`<span>${text}</span>`+(undo?`<button id="undoBtn">Desfazer</button>`:"");
+  t.classList.add("show"); clearTimeout(toastT);
+  if(undo) $("#undoBtn").onclick=()=>{ undo(); render(); toast("Pronto, desfeito."); };
+  toastT=setTimeout(()=>t.classList.remove("show"), undo?6000:2400);
+}
+function openSheet(title, body){
+  closeSheet(); $("#toast").classList.remove("show");
+  const b=document.createElement("div"); b.className="backdrop"; b.id="sheet";
+  b.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><div class="sheet-head"><h2 id="sheetTitle" style="margin:0">${title}</h2><button class="ghost small" onclick="closeSheet()">Fechar</button></div>${body}</div>`;
+  b.onclick=e=>{ if(e.target===b) closeSheet(); };
+  document.body.appendChild(b); (b.querySelector("input")||b.querySelector(".sheet button"))?.focus();
+}
+function closeSheet(){ $("#sheet")?.remove(); }
+function confirmBox(title,text,okLabel,fn){
+  openSheet(title,`<p style="margin:4px 0 16px">${text}</p><div class="row" style="justify-content:flex-end"><button class="ghost" onclick="closeSheet()">Cancelar</button><button id="okBtn">${okLabel}</button></div>`);
+  $("#okBtn").onclick=()=>{ closeSheet(); fn(); };
+}
+function confetti(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const cs=["#2f5bea","#dc2626","#7b3fe4","#fff"];
+  for(let i=0;i<60;i++){ const c=document.createElement("i"); c.className="confetti"; c.style.left=Math.random()*100+"vw"; c.style.background=cs[i%4]; c.style.animationDelay=Math.random()*.4+"s"; document.body.appendChild(c); setTimeout(()=>c.remove(),2000); }
+}
+
+/* ---------- LOGIN ---------- */
+const emailOk = v => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+function loginMsg(html,kind){ const m=$("#loginMsg"); m.innerHTML=html; m.className="notice "+kind; m.hidden=false; }
+async function loginEmail(e){
+  e.preventDefault(); const v=$("#email").value.trim();
+  if(!v){ setErr("email","Digite seu email para receber o link."); return $("#email").focus(); }
+  if(!emailOk(v)){ setErr("email","Esse email parece incompleto. Confira, ex: nome@gmail.com"); return $("#email").focus(); }
+  setErr("email","");
+  if(!sb) return loginMsg("O login por email ainda não está ligado neste protótipo. Use o <b>modo demonstração</b> abaixo.","warn");
+  const btn=$("#loginBtn"); btn.disabled=true; btn.textContent="Enviando…";
+  const {error}=await sb.auth.signInWithOtp({email:v,options:{emailRedirectTo:location.href.split("#")[0]}});
+  btn.disabled=false; btn.textContent="Receber link de acesso";
+  error ? loginMsg("Não deu pra enviar o link agora. Confira sua conexão e tente de novo em instantes.","warn")
+        : loginMsg(`Pronto! Enviamos um link para <b>${esc(v)}</b>. Abra o email neste aparelho e toque no link.`,"ok");
+}
+async function loginGoogle(){
+  if(!sb) return loginMsg("O login com Google ainda não está ligado neste protótipo. Use o <b>modo demonstração</b> abaixo.","warn");
+  await sb.auth.signInWithOAuth({provider:"google",options:{redirectTo:location.href.split("#")[0]}});
+}
+function enterDemo(){ S.me=S.members[0]; boot(); }
+async function logout(){
+  closeSheet(); if(sb) await sb.auth.signOut(); S.me=null;
+  $("#app").hidden=true; $("#login").hidden=false; history.replaceState(null,"",location.pathname); toast("Você saiu da conta.");
+}
+if(sb){ sb.auth.onAuthStateChange((_e,session)=>{ if(session && !S.me){ S.me={id:session.user.id,nome:session.user.email.split("@")[0],cor:"#7b3fe4"}; boot(); } }); }
+
+/* ---------- NAVEGAÇÃO ---------- */
+function boot(){
+  const L=$("#login"); L.classList.add("leaving");
+  setTimeout(()=>{
+    L.hidden=true; L.classList.remove("leaving"); $("#app").hidden=false;
+    $("#topright").innerHTML=`<button class="iconbtn" onclick="openHelp()" aria-label="Ajuda">${ico("help")}<span class="hide-sm">Ajuda</span></button>${av(S.me)}<button class="ghost small hide-sm" onclick="logout()">Sair</button>`;
+    const k=location.hash.slice(1); tab=ROUTES.some(r=>r[0]===k)?k:"inicio";
+    render(); scrollTo(0,0); toast(`Bem-vindo(a), ${esc(S.me.nome)}!`);
+  },450);
+}
+function go(k){ if(location.hash!=="#"+k) location.hash=k; else { closeSheet(); render(); scrollTo({top:0,behavior:"smooth"}); } }
+addEventListener("hashchange",()=>{ const k=location.hash.slice(1); if(S.me && ROUTES.some(r=>r[0]===k)){ tab=k; closeSheet(); render(); scrollTo({top:0}); } });
+function openMore(){
+  openSheet("Mais", ROUTES.slice(4).map(([k,l,i])=>`<button class="menu-item" ${k===tab?'aria-current="page"':''} onclick="go('${k}')">${ico(i)}${l}</button>`).join("")
+    +`<hr style="border:0;border-top:1px solid var(--line);margin:8px 0"><button class="menu-item" onclick="openHelp()">${ico("help")}Ajuda</button><button class="menu-item" onclick="logout()">${ico("out")}Sair da conta</button>`);
+}
+function render(){
+  const cur4=ROUTES.slice(0,4).some(r=>r[0]===tab), name=ROUTES.find(r=>r[0]===tab)[1];
+  $("#topnav").innerHTML=ROUTES.map(([k,l])=>`<button ${k===tab?'aria-current="page"':''} onclick="go('${k}')">${l}</button>`).join("");
+  $("#bottomnav").innerHTML=ROUTES.slice(0,4).map(([k,l,i])=>`<button ${k===tab?'aria-current="page"':''} onclick="go('${k}')">${ico(i)}<span>${l}</span></button>`).join("")
+    +`<button ${cur4?'':'aria-current="page"'} onclick="openMore()" aria-haspopup="dialog">${ico("more")}<span>${cur4?"Mais":name}</span></button>`;
+  $("#view").innerHTML=V[tab]();
+  document.title=`${name} · Uni-vos`;
+}
+
+/* ---------- AJUDA ---------- */
+const HELP = {
+  inicio:["Início",[["O que aparece aqui?","Um resumo da semana: o livro da vez, sua meta de leitura, o próximo debate e o progresso do grupo."],["Como volto para cá?","Toque na logo Uni-vos no topo ou em Início."]]],
+  livro:["Livro da vez",[["Como atualizo minha página?","Digite a página em que parou e toque em Salvar página. Os botões −10 e +10 ajustam rápido."],["Por que alguns comentários estão escondidos?","Comentários de páginas depois da sua ficam escondidos para evitar spoiler. Toque em “Mostrar mesmo assim” se quiser ler."],["Posso apagar meu comentário?","Sim. Toque em Apagar e, se foi engano, em Desfazer logo em seguida."]]],
+  debates:["Debates",[["Qual é a regra do FINALIZADO!?","Uma pessoa fala por vez e termina a mensagem com FINALIZADO! para a próxima começar."],["Como confirmo presença?","Toque em “Vou participar”. Toque de novo para cancelar."],["Como marco um debate?","Preencha tema, data e formato em Marcar debate. A data precisa ser no futuro."]]],
+  perfil:["Mapa político",[["O que é o mapa político?","Um questionário de 40 afirmações em dois eixos: economia (esquerda–direita) e costumes (progressista–conservador)."],["Posso parar no meio?","Sim. Toque em Pausar e suas respostas ficam guardadas."],["Tem atalho?","No computador, use as teclas 1 a 5 para responder e ← para voltar."],["É científico?","Não. É um jogo para puxar debate, não um teste validado."]]],
+  estante:["Estante",[["Como o próximo livro é escolhido?","O livro mais votado da fila vira o próximo livro da vez."],["Como sugiro um livro?","Preencha título, autor e número de páginas em Sugerir livro."]]],
+  pauta:["Pauta",[["Para que serve a pauta?","Para sugerir e votar temas de debate."],["Como transformo um tema em debate?","Toque em “Virar debate”. O tema já vai preenchido no formulário de Debates."]]],
+  membros:["Membros",[["O que aparece no card de cada pessoa?","Livros sugeridos, debates confirmados e o resultado do mapa político, se a pessoa já respondeu."]]]
+};
+const norm = t => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+function openHelp(){
+  const order=[tab,...Object.keys(HELP).filter(k=>k!==tab)];
+  openSheet("Ajuda",`${fld("helpQ","Buscar na ajuda",`<input id="helpQ" type="search" placeholder="Ex: spoiler, votar, meta" oninput="filterHelp(this.value)">`)}
+   <div id="helpList">${order.map(k=>`<div class="help-sec"><h3 style="margin:16px 0 2px">${HELP[k][0]} ${k===tab?'<span class="pill">esta página</span>':''}</h3>${HELP[k][1].map(([q,a],i)=>`<details class="help" ${k===tab&&i===0?"open":""}><summary>${q}</summary><p class="muted" style="margin:4px 0 6px">${a}</p></details>`).join("")}</div>`).join("")}
+   <p class="empty" id="helpEmpty" hidden>Nada encontrado. Tente outra palavra.</p></div>`);
+}
+function filterHelp(q){
+  q=norm(q.trim()); let any=false;
+  document.querySelectorAll(".help-sec").forEach(sec=>{ let vis=0;
+    sec.querySelectorAll("details").forEach(d=>{ const ok=!q||norm(d.textContent).includes(q); d.hidden=!ok; if(ok){vis++; if(q) d.open=true;} });
+    sec.hidden=!vis; if(vis) any=true; });
+  $("#helpEmpty").hidden=any;
+}
+
+/* ---------- TELAS ---------- */
+function progressList(b){
+  const p=S.progress[b.id]||{};
+  return `<div class="list">${S.members.map(m=>{ const pg=p[m.id]||0, pct=Math.round(pg/b.paginas*100);
+    return `<div class="row item">${av(m)}<div style="flex:1;min-width:0"><div class="row between"><b>${esc(m.nome)}${m.id===S.me.id?' <span class="pill">você</span>':''}</b><span class="muted" style="font-size:13.5px">pág. ${pg} · ${pct}%</span></div><div class="bar" role="progressbar" aria-label="Progresso de ${esc(m.nome)}" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct}%"></i></div></div></div>`; }).join("")}</div>`;
+}
+function commentHtml(c,mine){
+  const m=M(c.user), hide=c.pag>mine && !S.revealed[c.id] && c.user!==S.me.id;
+  return `<div class="item row" style="align-items:flex-start">${av(m)}<div style="flex:1;min-width:0">
+    <div class="row between"><small class="muted">${esc(m.nome)} · pág. ${c.pag}</small>${c.user===S.me.id?`<button class="link" onclick="delComment(${c.id})">Apagar</button>`:""}</div>
+    ${hide?`<div class="spoiler-box">🙈 Comentário da pág. ${c.pag}, depois de onde você está. <button class="link" onclick="S.revealed[${c.id}]=1;render()">Mostrar mesmo assim</button></div>`:`<div style="overflow-wrap:anywhere">${esc(c.texto)}</div>`}
+  </div></div>`;
+}
+const voteBtn = (arr,fn,label) => { const on=arr.includes(S.me.id);
+  return `<button class="small ${on?"":"ghost"}" aria-pressed="${on}" onclick="${fn}" aria-label="${on?"Remover voto de":"Votar em"} ${label}, ${arr.length} votos">${on?"✓ Votado":"▲ Votar"} · ${arr.length}</button>`; };
+function compass(){
+  const pts=S.members.filter(m=>S.results[m.id]).map(m=>{ const r=S.results[m.id], x=160+r.e*1.35, y=160-r.s*1.35;
+    return `<g class="pt"><circle cx="${x}" cy="${y}" r="9" fill="${m.cor}" stroke="#fff" stroke-width="2.5"/><text x="${x}" y="${y-15}" text-anchor="middle" font-size="12" font-weight="700" style="fill:currentColor">${esc(m.nome)}</text></g>`; }).join("");
+  const t=(x,y,txt,rot="")=>`<text x="${x}" y="${y}" text-anchor="middle" font-size="11" style="fill:var(--muted)" ${rot}>${txt}</text>`;
+  return `<svg viewBox="0 0 320 330" class="compass" role="img" aria-label="Mapa político do grupo: eixo horizontal economia, vertical costumes">
+   <defs><linearGradient id="cg" x1="0" x2="1"><stop offset="0" stop-color="#dc2626" stop-opacity=".22"/><stop offset=".5" stop-color="#7b3fe4" stop-opacity=".1"/><stop offset="1" stop-color="#2f5bea" stop-opacity=".22"/></linearGradient></defs>
+   <rect x="22" y="22" width="276" height="276" rx="14" fill="url(#cg)" style="stroke:var(--line)"/>
+   <line x1="160" y1="22" x2="160" y2="298" style="stroke:var(--line)" stroke-width="2"/><line x1="22" y1="160" x2="298" y2="160" style="stroke:var(--line)" stroke-width="2"/>
+   ${t(160,15,"CONSERVADOR")}${t(160,316,"PROGRESSISTA")}${t(12,160,"ESQUERDA",'transform="rotate(-90 12 160)"')}${t(310,160,"DIREITA",'transform="rotate(90 310 160)"')}
+   ${t(91,44,"esq. conservadora")}${t(229,44,"dir. conservadora")}${t(91,284,"esq. progressista")}${t(229,284,"dir. progressista")}
+   ${pts}</svg>`;
+}
+function label(r){
+  const E=r.e<=-20?"Esquerda":r.e>=20?"Direita":"Centro";
+  const A=r.s>=20?["conservadora","conservador"]:r.s<=-20?["progressista","progressista"]:["moderada nos costumes","moderado nos costumes"];
+  if(E==="Centro" && Math.abs(r.s)<20) return "Centro";
+  return E+" "+(E==="Centro"?A[1]:A[0]);
+}
+
+const V = {
+inicio(){
+  const b=cur(), live=S.debates.find(d=>d.status==="rolando"), next=S.debates.find(d=>d.status!=="rolando"), d=live||next;
+  const mp=myPage(), pct=Math.round(mp/b.paginas*100), r=S.results[S.me.id], ans=Object.keys(Q.ans).length;
+  return `<div class="hero"><h1>E aí, ${esc(S.me.nome)} 👋</h1><p>${live?`🔴 Debate acontecendo agora: <b>${esc(live.tema)}</b>`:"Este é o resumo do clube nesta semana."}</p></div>
+  <div class="grid g3">
+    <div class="card"><span class="pill">Livro da vez</span><div class="row" style="margin-top:10px;align-items:flex-start">${cover(b)}<div><h3>${esc(b.titulo)}</h3><p class="muted" style="margin:0 0 6px">${esc(b.autor)}</p><p style="margin:0 0 10px">Você está na pág. <b>${mp}</b> (${pct}%)</p><button class="small" onclick="go('livro')">Atualizar página</button></div></div></div>
+    <div class="card"><span class="pill">Meta da semana</span><h3 style="margin-top:10px">Ler até a pág. ${S.meta.ate}</h3><p class="muted" style="margin:0 0 8px">Prazo: ${S.meta.prazo}</p>
+      <div class="bar" role="progressbar" aria-label="Progresso da meta" aria-valuenow="${Math.min(mp,S.meta.ate)}" aria-valuemin="0" aria-valuemax="${S.meta.ate}"><i style="width:${Math.min(100,mp/S.meta.ate*100)}%"></i></div>
+      <p style="margin:8px 0 0">${mp>=S.meta.ate?"✅ Meta batida!":`Faltam <b>${S.meta.ate-mp}</b> páginas`}</p></div>
+    <div class="card"><span class="pill ${live?"live":""}">${live?"🔴 Ao vivo":"Próximo debate"}</span><h3 style="margin-top:10px">${esc(d.tema)}</h3><p class="muted" style="margin:0 0 10px">${fmt(d.data)}</p><button class="small" onclick="go('debates')">Ver debates</button></div>
+  </div>
+  ${!r?`<div class="card" style="margin-top:14px"><div class="row between wrap"><div><h3>🧭 Onde você está no mapa político?</h3><p class="muted" style="margin:0">${ans?`Você respondeu ${ans} de 40. Falta pouco.`:"40 afirmações, cerca de 5 minutos."}</p></div><button onclick="Q.started=true;go('perfil')">${ans?"Continuar":"Começar"}</button></div></div>`:""}
+  <div class="card" style="margin-top:14px"><h3>Progresso do grupo</h3>${progressList(b)}</div>`;
+},
+livro(){
+  const b=cur(), mine=myPage(), at=S.progressAt[S.me.id];
+  const cs=S.comments.filter(c=>c.livro===b.id).sort((a,c)=>a.pag-c.pag);
+  return head("Livro da vez",`${esc(b.titulo)} · ${esc(b.autor)} · ${b.paginas} páginas`)+`<div class="grid g2">
+  <div class="card"><form onsubmit="savePage(event)" novalidate>
+    ${fld("pg","Em que página você parou?",`<div class="stepper"><button type="button" class="ghost" onclick="stepPg(-10)" aria-label="Voltar 10 páginas">−10</button><input id="pg" type="number" inputmode="numeric" min="0" max="${b.paginas}" value="${mine}" aria-describedby="pg-hint pg-err"><button type="button" class="ghost" onclick="stepPg(10)" aria-label="Avançar 10 páginas">+10</button></div>`,`De 0 a ${b.paginas}. ${at?`Última atualização: ${at}.`:"Você ainda não atualizou nesta semana."}`)}
+    <button type="submit" style="width:100%;margin-top:10px">Salvar página</button></form>
+    <h3 style="margin-top:20px">Progresso do grupo</h3>${progressList(b)}</div>
+  <div class="card"><h3>Comentários sem spoiler</h3><p class="hint" style="margin-top:0">Comentários de páginas depois da sua ficam escondidos.</p>
+    <div class="list">${cs.length?cs.map(c=>commentHtml(c,mine)).join(""):`<p class="empty">Nenhum comentário ainda. Seja a primeira pessoa a comentar.</p>`}</div>
+    <form onsubmit="addComment(event)" novalidate style="margin-top:12px">${fld("ct",`Seu comentário <span class="muted" style="font-weight:400">(marcado na pág. ${mine})</span>`,`<textarea id="ct" rows="3" maxlength="500" placeholder="O que achou até aqui?" oninput="document.getElementById('ctc').textContent=this.value.length+'/500'"></textarea>`,`<span id="ctc">0/500</span> caracteres`)}
+    <button type="submit" style="width:100%;margin-top:8px">Publicar comentário</button></form></div></div>`;
+},
+debates(){
+  const n=new Date(), min=new Date(n-n.getTimezoneOffset()*6e4).toISOString().slice(0,16), pre=S.prefill; S.prefill="";
+  return head("Debates","Confirme presença ou marque um novo debate.")+`
+  <div class="card" style="margin-bottom:14px"><b>Regras da casa:</b> uma pessoa fala por vez e termina com <span class="pill">FINALIZADO!</span>. Réplica e tréplica valem. Fonte é bem-vinda.</div>
+  <div class="grid g2"><div class="card"><h3>Agenda</h3><div class="list">${S.debates.map(d=>{ const on=d.rsvp.includes(S.me.id); return `<div class="item">
+    <div class="row between" style="align-items:flex-start"><b>${esc(d.tema)}</b>${d.status==="rolando"?'<span class="pill live">🔴 ao vivo</span>':""}</div>
+    <div class="muted" style="font-size:13.5px">${fmt(d.data)} · ${esc(d.formato)}</div>
+    <div class="row between wrap" style="margin-top:8px"><div class="row" style="gap:4px">${d.rsvp.map(id=>av(M(id))).join("")||'<span class="muted" style="font-size:13px">Ninguém confirmou ainda</span>'}<span class="hint" style="margin-left:4px">${d.rsvp.length} confirmado${d.rsvp.length===1?"":"s"}</span></div>
+    <button class="small ${on?"":"ghost"}" aria-pressed="${on}" onclick="rsvp(${d.id})">${on?"✓ Confirmado":"Vou participar"}</button></div></div>`; }).join("")}</div></div>
+  <div class="card"><h3>Marcar debate</h3><form onsubmit="addDebate(event)" novalidate class="grid" style="gap:12px">
+    ${fld("dt","Tema",`<input id="dt" value="${esc(pre)}" placeholder="Ex: Pena de morte" autocomplete="off">`)}
+    ${fld("dd","Data e hora",`<input id="dd" type="datetime-local" min="${min}">`)}
+    ${fld("df","Formato",`<select id="df"><option>Rodada com FINALIZADO!</option><option>Clube do livro</option><option>Livre</option></select>`)}
+    <button type="submit">Agendar debate</button></form></div></div>`;
+},
+perfil(){
+  const r=S.results[S.me.id], ans=Object.keys(Q.ans).length;
+  if(!Q.done && !Q.started) return head("Mapa político","Descubra onde você está em dois eixos: economia e costumes.")+`
+    <div class="card"><div class="grid g2" style="align-items:center"><div>
+      <h3>Como funciona</h3>
+      <ul class="steps"><li>40 afirmações, uma por vez (cerca de 5 min).</li><li>Diga o quanto concorda, de “Discordo totalmente” a “Concordo plenamente”.</li><li>Dá pra voltar, mudar a resposta ou pausar quando quiser.</li><li class="hide-sm">Atalhos: teclas <kbd>1</kbd> a <kbd>5</kbd> respondem, <kbd>←</kbd> volta.</li></ul>
+      <p class="hint">É um jogo para puxar debate, não um teste científico.</p>
+      <button onclick="Q.started=true;render()">${ans?`Continuar (${ans}/40)`:"Começar"}</button></div>${compass()}</div></div>`;
+  if(!Q.done){
+    const qi=ORDER[Q.i], q=QUIZ[qi];
+    return `<div class="card" aria-live="polite">
+      <div class="row between"><span class="pill">Pergunta ${Q.i+1} de ${QUIZ.length}</span><span class="muted" style="font-size:13.5px">${q[1]==="e"?"💰 Economia":"🏛️ Costumes"}</span></div>
+      <div class="bar" style="margin:12px 0 16px" role="progressbar" aria-label="Progresso do questionário" aria-valuenow="${Q.i}" aria-valuemin="0" aria-valuemax="${QUIZ.length}"><i style="width:${Q.i/QUIZ.length*100}%;animation:none;transition:width .4s"></i></div>
+      <h2 class="stmt">${q[0]}</h2>
+      <div class="likert" role="group" aria-label="Quanto você concorda?">${LK.map((l,k)=>`<button class="lk" aria-pressed="${Q.ans[qi]===k+1}" onclick="answer(${k+1})"><b aria-hidden="true">${["−−","−","0","+","++"][k]}</b><span>${l}</span></button>`).join("")}</div>
+      <div class="row between" style="margin-top:16px"><button class="ghost small" onclick="prevQ()" ${Q.i?"":"disabled"}>← Voltar</button><button class="ghost small" onclick="pauseQuiz()">Pausar</button></div>
+    </div>`;
+  }
+  const pend=S.members.filter(m=>!S.results[m.id]);
+  return `<div class="hero"><p>Seu resultado</p><div class="big">${label(r)}</div><p>Economia ${r.e>0?"+":""}${r.e} · Costumes ${r.s>0?"+":""}${r.s} (de −100 a +100)</p></div>
+  <div class="grid g2">
+    <div class="card"><h3>Seus eixos</h3>
+      <p style="margin:14px 0 0"><b>💰 Economia</b></p><div class="scale econ"><i style="left:${50+r.e/2}%"></i></div><div class="ends"><span>Esquerda</span><span>Direita</span></div>
+      <p style="margin:18px 0 0"><b>🏛️ Costumes</b></p><div class="scale soc"><i style="left:${50+r.s/2}%"></i></div><div class="ends"><span>Progressista</span><span>Conservador</span></div>
+      <div class="row wrap" style="margin-top:20px"><button onclick="go('debates')">Marcar um debate</button><button class="ghost" onclick="redoQuiz()">Refazer questionário</button></div></div>
+    <div class="card"><h3>O grupo no mapa</h3>${compass()}${pend.length?`<p class="hint" style="text-align:center">Ainda não responderam: ${pend.map(m=>esc(m.nome)).join(", ")}</p>`:""}</div>
+  </div>`;
+},
+estante(){
+  const fila=S.books.filter(b=>b.status==="fila").sort((a,b)=>b.votos.length-a.votos.length), lidos=S.books.filter(b=>b.status==="lido");
+  return head("Estante","Sugira livros e vote. O mais votado vira o próximo livro da vez.")+`<div class="grid g2">
+  <div class="card"><h3>Fila de leitura</h3><div class="list">${fila.length?fila.map((b,i)=>`<div class="item row">${cover(b,"sm")}<div style="flex:1;min-width:0"><b>${i===0?"🥇 ":""}${esc(b.titulo)}</b><div class="muted" style="font-size:13.5px">${esc(b.autor)} · ${b.paginas} págs. · sugerido por ${esc(M(b.por).nome)}</div></div>${voteBtn(b.votos,`voteBook(${b.id})`,esc(b.titulo))}</div>`).join(""):`<p class="empty">A fila está vazia. Sugira o primeiro livro.</p>`}</div>
+    <h3 style="margin-top:20px">Já lidos</h3><div class="list">${lidos.map(b=>`<div class="item"><b>${esc(b.titulo)}</b> <span class="muted">— ${esc(b.autor)}</span></div>`).join("")||`<p class="empty">Nenhum livro terminado ainda.</p>`}</div></div>
+  <div class="card"><h3>Sugerir livro</h3><form onsubmit="addBook(event)" novalidate class="grid" style="gap:12px">
+    ${fld("nt","Título",`<input id="nt" autocomplete="off" placeholder="Ex: A Revolução dos Bichos">`)}
+    ${fld("na","Autor",`<input id="na" autocomplete="off" placeholder="Ex: George Orwell">`)}
+    ${fld("np","Número de páginas",`<input id="np" type="number" inputmode="numeric" min="1" max="3000" placeholder="Ex: 152">`,"Usado para calcular o progresso de leitura.")}
+    <button type="submit">Adicionar à fila</button></form></div></div>`;
+},
+pauta(){
+  const t=[...S.topics].sort((a,b)=>b.votos.length-a.votos.length);
+  return head("Pauta","Temas sugeridos para os próximos debates. Vote nos que você quer discutir.")+`<div class="grid g2">
+  <div class="card"><h3>Temas</h3><div class="list">${t.length?t.map(x=>`<div class="item"><b>${esc(x.tema)}</b><div class="row wrap" style="margin-top:8px">${voteBtn(x.votos,`voteTopic(${x.id})`,esc(x.tema))}<button class="ghost small" onclick="toDebate(${x.id})">Virar debate →</button></div></div>`).join(""):`<p class="empty">Nenhum tema ainda. Proponha o primeiro.</p>`}</div></div>
+  <div class="card"><h3>Propor tema</h3><form onsubmit="addTopic(event)" novalidate class="grid" style="gap:12px">${fld("tt","Tema",`<input id="tt" autocomplete="off" maxlength="120" placeholder="Ex: Renda básica universal">`)}<button type="submit">Propor tema</button></form></div></div>`;
+},
+membros(){
+  return head("Membros","Quem participa do clube.")+`<div class="grid g3">${S.members.map(m=>{
+    const sug=S.books.filter(b=>b.por===m.id).length, deb=S.debates.filter(d=>d.rsvp.includes(m.id)).length, r=S.results[m.id];
+    return `<div class="card"><div class="row">${av(m)}<h3 style="margin:0">${esc(m.nome)}</h3>${m.id===S.me.id?'<span class="pill">você</span>':""}</div>
+      <p style="margin:10px 0 6px">${r?`<span class="pill">🧭 ${label(r)}</span>`:'<span class="hint">Ainda não fez o mapa político</span>'}</p>
+      <p class="muted" style="margin:0">💡 ${sug} sugest${sug===1?"ão":"ões"} · 🎤 ${deb} debate${deb===1?"":"s"}</p></div>`; }).join("")}</div>`;
+}
+};
+
+/* ---------- AÇÕES (no Supabase viram insert/upsert/delete) ---------- */
+function stepPg(d){ const i=$("#pg"), b=cur(); i.value=Math.max(0,Math.min(b.paginas,(+i.value||0)+d)); setErr("pg",""); }
+function savePage(e){
+  e.preventDefault(); const b=cur(), raw=$("#pg").value, v=Number(raw);
+  if(raw===""||!Number.isInteger(v)) return showErrs(["pg"],{pg:"Digite um número de página, ex: 120."});
+  if(v<0||v>b.paginas) return showErrs(["pg"],{pg:`A página precisa estar entre 0 e ${b.paginas}.`});
+  const p=(S.progress[b.id] ||= {}), old=p[S.me.id]||0, oldAt=S.progressAt[S.me.id];
+  p[S.me.id]=v; S.progressAt[S.me.id]="agora há pouco"; render();
+  toast(`Página ${v} salva.`,()=>{ p[S.me.id]=old; S.progressAt[S.me.id]=oldAt; });
+  if(old<S.meta.ate && v>=S.meta.ate){ confetti(); }
+}
+function addComment(e){
+  e.preventDefault(); const t=$("#ct").value.trim();
+  if(!t) return showErrs(["ct"],{ct:"Escreva algo antes de publicar."});
+  const c={id:Date.now(),livro:cur().id,user:S.me.id,pag:myPage(),texto:t}; S.comments.push(c); render();
+  toast("Comentário publicado.",()=>{ S.comments=S.comments.filter(x=>x!==c); });
+}
+function delComment(id){ const i=S.comments.findIndex(c=>c.id===id), c=S.comments[i]; S.comments.splice(i,1); render(); toast("Comentário apagado.",()=>S.comments.splice(i,0,c)); }
+function voteBook(id){ const b=S.books.find(x=>x.id===id), on=toggle(b.votos,S.me.id); render(); toast(on?`Voto em “${esc(b.titulo)}” registrado.`:"Voto removido."); }
+function addBook(e){
+  e.preventDefault(); const t=$("#nt").value.trim(), a=$("#na").value.trim(), raw=$("#np").value, n=Number(raw), errs={};
+  if(!t) errs.nt="Digite o título do livro.";
+  else if(S.books.some(b=>norm(b.titulo)===norm(t))) errs.nt="Esse livro já está na estante. Que tal votar nele na fila?";
+  if(!a) errs.na="Digite o nome do autor.";
+  if(raw===""||!Number.isInteger(n)||n<1||n>3000) errs.np="Digite um número inteiro entre 1 e 3000.";
+  if(showErrs(["nt","na","np"],errs)) return;
+  const b={id:Date.now(),titulo:t,autor:a,paginas:n,status:"fila",votos:[S.me.id],cor:"#5a3fb0",por:S.me.id}; S.books.push(b); render();
+  toast(`“${esc(t)}” entrou na fila.`,()=>{ S.books=S.books.filter(x=>x!==b); });
+}
+function rsvp(id){ const d=S.debates.find(x=>x.id===id), on=toggle(d.rsvp,S.me.id); render(); toast(on?"Presença confirmada.":"Presença cancelada.",()=>toggle(d.rsvp,S.me.id)); }
+function addDebate(e){
+  e.preventDefault(); const t=$("#dt").value.trim(), dv=$("#dd").value, errs={};
+  if(!t) errs.dt="Digite o tema do debate.";
+  if(!dv) errs.dd="Escolha a data e a hora.";
+  else if(new Date(dv)<new Date()) errs.dd="Essa data já passou. Escolha uma data no futuro.";
+  if(showErrs(["dt","dd"],errs)) return;
+  const d={id:Date.now(),tema:t,data:dv,formato:$("#df").value,rsvp:[S.me.id],status:"agendado"};
+  S.debates.push(d); S.debates.sort((a,b)=>(a.status==="rolando"?-1:0)||new Date(a.data)-new Date(b.data)); render();
+  toast("Debate agendado.",()=>{ S.debates=S.debates.filter(x=>x!==d); });
+}
+function voteTopic(id){ const x=S.topics.find(t=>t.id===id), on=toggle(x.votos,S.me.id); render(); toast(on?"Voto registrado.":"Voto removido."); }
+function toDebate(id){ S.prefill=S.topics.find(t=>t.id===id).tema; go("debates"); setTimeout(()=>{ $("#dd")?.focus(); toast("Tema preenchido. Agora escolha a data."); },80); }
+function addTopic(e){
+  e.preventDefault(); const t=$("#tt").value.trim(), errs={};
+  if(!t) errs.tt="Digite o tema que você quer debater.";
+  else if(S.topics.some(x=>norm(x.tema)===norm(t))) errs.tt="Esse tema já está na pauta. Vote nele na lista.";
+  if(showErrs(["tt"],errs)) return;
+  const x={id:Date.now(),tema:t,votos:[S.me.id]}; S.topics.push(x); render();
+  toast("Tema proposto.",()=>{ S.topics=S.topics.filter(y=>y!==x); });
+}
+/* quiz */
+function scoreQuiz(){ let e=0,s=0; QUIZ.forEach((q,i)=>{ const v=(Q.ans[i]||3)-3; q[1]==="e"? e+=v*q[2] : s+=v*q[2]; }); return {e:Math.round(e/40*100), s:Math.round(s/40*100)}; }
+function answer(v){
+  if(Q.busy) return; Q.busy=true; Q.ans[ORDER[Q.i]]=v;
+  document.querySelectorAll(".lk").forEach((b,k)=>b.setAttribute("aria-pressed",k===v-1));
+  setTimeout(()=>{ Q.busy=false;
+    if(Q.i<QUIZ.length-1){ Q.i++; render(); }
+    else { S.results[S.me.id]=scoreQuiz(); Q.done=true; Q.started=false; render(); scrollTo({top:0}); confetti(); toast("Resultado pronto! Ele também aparece em Membros."); }
+  },200);
+}
+function prevQ(){ if(Q.i>0){ Q.i--; render(); } }
+function pauseQuiz(){ Q.started=false; render(); toast(`Respostas guardadas (${Object.keys(Q.ans).length}/40). Continue quando quiser.`); }
+function redoQuiz(){ confirmBox("Refazer o questionário?","Suas 40 respostas e o resultado atual serão apagados, e você começa do zero.","Apagar e refazer",()=>{ Object.assign(Q,{started:true,i:0,ans:{},done:false}); delete S.results[S.me.id]; render(); }); }
+addEventListener("keydown",e=>{
+  if(e.key==="Escape") return closeSheet();
+  if(!S.me || tab!=="perfil" || !Q.started || Q.done || $("#sheet") || /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;
+  if(e.key>="1" && e.key<="5") answer(+e.key);
+  else if(e.key==="ArrowLeft") prevQ();
+});
+</script>
+</body>
+</html>

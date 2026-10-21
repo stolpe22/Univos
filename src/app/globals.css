@@ -1,0 +1,228 @@
+@import "tailwindcss";
+
+/* Tokens do design system (CLAUDE.md). Cor solta só aqui, nunca em componente. */
+:root {
+  --blue: #2f5bea;
+  --red: #dc2626;
+  --purple: #7b3fe4;
+  /* vermelho do degradê da logo (mais fechado que --red, igual à arte oficial) */
+  --logo-red: #c0392b;
+  --grad: linear-gradient(120deg, var(--blue) 0%, var(--purple) 45%, var(--red) 92%);
+  --bg: #f4f2fb;
+  --card: #ffffff;
+  --ink: #1d1a2e;
+  --muted: #5f5a7a;
+  --line: #e2ddf0;
+  --accent: #6a2fd6;
+  --accent-soft: #ece4fd;
+  --ok: #1f8a5b;
+  --err: #c81e1e;
+
+  /* alturas das barras fixas, usadas no scroll-padding (WCAG 2.4.11) */
+  --toph: 67px;
+  --navh: 64px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0d1a;
+    --card: #1a1729;
+    --ink: #ece9f8;
+    --muted: #a9a4c4;
+    --line: #2e2a45;
+    --accent: #b08cff;
+    --accent-soft: #2a2146;
+    --err: #ff6b6b;
+  }
+}
+
+/* Telas de entrada (login, convite): sempre escuras, nos dois temas. */
+.tema-escuro {
+  --bg: #0d0b18;
+  --card: #1a1729;
+  --ink: #ece9f8;
+  --muted: #b9b4d2;
+  --line: #6b6590;
+  --accent: #b08cff;
+  --accent-soft: #2a2146;
+  --ok: #4ade80;
+  --err: #ff8a8a;
+  color-scheme: dark;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+@media (min-width: 760px) {
+  :root {
+    --toph: 115px;
+    --navh: 0px;
+  }
+}
+
+@theme inline {
+  --color-blue: var(--blue);
+  --color-red: var(--red);
+  --color-purple: var(--purple);
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-ok: var(--ok);
+  --color-err: var(--err);
+  --background-image-grad: var(--grad);
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-serif: var(--font-fraunces), Georgia, serif;
+  --breakpoint-md: 760px;
+  --animate-rise: rise 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-up: up 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-fade: fade 0.2s both;
+  --animate-grow: grow 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+  }
+  @keyframes up {
+    from {
+      opacity: 0;
+      transform: translateY(40px);
+    }
+  }
+  @keyframes fade {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes grow {
+    from {
+      transform: scaleX(0);
+    }
+  }
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--toph) + 8px);
+  scroll-padding-bottom: calc(var(--navh) + env(safe-area-inset-bottom) + 8px);
+}
+
+body {
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.5 var(--font-sans);
+  overflow-wrap: anywhere;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-serif);
+  line-height: 1.2;
+}
+
+/* Inputs com 16 px evitam o zoom automático do iOS */
+input,
+select,
+textarea {
+  font-size: 16px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- telas de entrada (login, convite) ---------- */
+.fundo-entrada {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.fundo-entrada .blob {
+  position: absolute;
+  width: 55vmax;
+  height: 55vmax;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.6;
+  mix-blend-mode: screen;
+}
+.fundo-entrada .b1 {
+  background: var(--blue);
+  left: -20vmax;
+  top: -15vmax;
+  animation: drift1 14s ease-in-out infinite alternate;
+}
+.fundo-entrada .b2 {
+  background: var(--red);
+  right: -20vmax;
+  bottom: -15vmax;
+  animation: drift2 16s ease-in-out infinite alternate;
+}
+.fundo-entrada .b3 {
+  background: var(--purple);
+  left: 25%;
+  top: 25%;
+  width: 35vmax;
+  height: 35vmax;
+  animation: pulse 8s ease-in-out infinite;
+}
+.fundo-entrada .grade {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgb(255 255 255 / 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(circle at center, black 30%, transparent 75%);
+}
+.logo-entrada {
+  animation:
+    spin-in 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) both,
+    flutuar 5s ease-in-out 1.2s infinite;
+}
+@keyframes drift1 {
+  to {
+    transform: translate(25vmax, 18vmax);
+  }
+}
+@keyframes drift2 {
+  to {
+    transform: translate(-25vmax, -18vmax);
+  }
+}
+@keyframes pulse {
+  50% {
+    transform: scale(1.3);
+    opacity: 0.8;
+  }
+}
+@keyframes spin-in {
+  from {
+    transform: rotate(-200deg) scale(0.3);
+    opacity: 0;
+  }
+}
+@keyframes flutuar {
+  50% {
+    transform: translateY(-6px);
+  }
+}

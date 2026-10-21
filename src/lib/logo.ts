@@ -1,0 +1,43 @@
+/**
+ * Desenho da logo do Uni-vos (viewBox 0 0 64 64): círculo em degradê azul → vermelho com
+ * foice e martelo, em que o cabo do martelo é o traço vertical do cifrão.
+ *
+ * Usado pelo componente <Logo> (com os tokens de cor) e pelas imagens geradas
+ * (ícone do app e prévia do link), que não leem CSS e por isso usam as cores direto.
+ */
+export const LOGO = {
+  lamina:
+    "M15.34 43.11 L14.6 41.93 L13.95 40.69 L13.39 39.41 L12.92 38.1 L12.54 36.75 L12.26 35.39 L12.07 34 L11.98 32.61 L11.99 31.22 L12.09 29.82 L12.29 28.44 L12.58 27.08 L12.97 25.74 L13.46 24.43 L14.03 23.15 L14.69 21.92 L15.43 20.74 L16.26 19.62 L17.16 18.55 L18.13 17.55 L19.17 16.62 L20.27 15.76 L21.43 14.98 L22.64 14.29 L23.9 13.68 L25.19 13.16 L26.53 12.74 L27.88 12.43 L29.26 12.22 L30.65 12.13 L32.04 12.14 L33.41 12.26 L34.77 12.49 L36.11 12.82 L37.4 13.25 L38.66 13.78 L39.86 14.4 L41.01 15.09 L42.1 15.87 L43.12 16.72 L44.08 17.63 L44.96 18.6 L45.76 19.62 L46.5 20.68 L47.16 21.78 L47.74 22.92 L48.26 24.07 L48.72 25.25 L48.16 24.12 L47.49 23.06 L46.75 22.06 L45.93 21.13 L45.05 20.27 L44.11 19.48 L43.12 18.76 L42.1 18.13 L41.04 17.57 L39.95 17.08 L38.84 16.68 L37.72 16.35 L36.58 16.1 L35.44 15.92 L34.3 15.81 L33.16 15.77 L32.03 15.8 L30.91 15.9 L29.79 16.06 L28.7 16.29 L27.61 16.57 L26.55 16.92 L25.52 17.34 L24.51 17.83 L23.54 18.38 L22.61 19 L21.73 19.69 L20.9 20.44 L20.12 21.24 L19.4 22.09 L18.74 22.99 L18.15 23.94 L17.62 24.92 L17.16 25.94 L16.77 26.99 L16.46 28.06 L16.22 29.15 L16.06 30.26 L15.98 31.37 L15.98 32.49 L16.05 33.6 L16.2 34.71 L16.43 35.81 L16.73 36.88 L17.11 37.93 L17.56 38.95 L18.08 39.94 L18.66 40.89 Z",
+  cabo: "M17 42 l-5 6",
+  traco: "M32 19 V53",
+  cifrao: "M39 25 C37 21 25 20 25 27 C25 34 39 30 39 38 C39 45 27 45 24 40",
+  martelo:
+    "M21.6 10.4 Q21.6 9.4 22.6 9.4 H28.4 Q29.2 9.4 29.4 10.2 L29.6 11.2 H35.6 L43.6 13.2 Q44.4 13.4 44.4 14.2 Q44.4 15 43.6 15.2 L35.6 17.2 H29.6 L29.4 18.2 Q29.2 19 28.4 19 H22.6 Q21.6 19 21.6 18 Z",
+  /** Encaixe entre a cabeça do martelo e o cabo. */
+  encaixe: { x: 29.9, y: 17, width: 4.2, height: 3.4, rx: 0.8 },
+} as const;
+
+/** Cores da logo para as imagens geradas (as mesmas de --blue e --logo-red em globals.css). */
+const AZUL = "#2f5bea";
+const VERMELHO = "#c0392b";
+
+/** A logo como arquivo SVG completo, para ícone e prévia de link. */
+export function logoSvg(tamanho = 64) {
+  const g = "url(#g)";
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${tamanho}" height="${tamanho}" viewBox="0 0 64 64"><defs><linearGradient id="g" gradientUnits="userSpaceOnUse" x1="1" y1="1" x2="63" y2="63"><stop offset="0" stop-color="${AZUL}"/><stop offset=".375" stop-color="${AZUL}"/><stop offset=".625" stop-color="${VERMELHO}"/><stop offset="1" stop-color="${VERMELHO}"/></linearGradient></defs><circle cx="32" cy="32" r="31" fill="${g}"/><path d="${LOGO.lamina}" fill="#fff"/><path d="${LOGO.cabo}" stroke="#fff" stroke-width="5" stroke-linecap="round"/><path d="${LOGO.traco}" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/><path d="${LOGO.cifrao}" fill="none" stroke="${g}" stroke-width="6.6" stroke-linecap="round"/><path d="${LOGO.cifrao}" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/><path d="${LOGO.martelo}" fill="none" stroke="${g}" stroke-width="2.6" stroke-linejoin="round"/><path d="${LOGO.martelo}" fill="#fff"/><rect x="${LOGO.encaixe.x}" y="${LOGO.encaixe.y}" width="${LOGO.encaixe.width}" height="${LOGO.encaixe.height}" rx="${LOGO.encaixe.rx}" fill="#fff"/></svg>`;
+}
+
+/** A logo como data URI, para usar em <img> nas imagens geradas. */
+export function logoDataUri(tamanho = 64) {
+  return `data:image/svg+xml;base64,${Buffer.from(logoSvg(tamanho)).toString("base64")}`;
+}
+
+/** Cores da marca para as imagens geradas (espelham os tokens de globals.css). */
+export const MARCA = {
+  degrade: "linear-gradient(120deg, #2f5bea 0%, #7b3fe4 45%, #dc2626 92%)",
+  noite: "#0d0b18",
+  azul: "#2f5bea",
+  vermelho: "#dc2626",
+  roxo: "#7b3fe4",
+  branco: "#ffffff",
+} as const;
