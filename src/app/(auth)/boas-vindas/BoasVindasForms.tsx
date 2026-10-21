@@ -5,7 +5,8 @@ import { Aviso } from "@/components/layout/TelaEntrada";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { sair } from "@/features/auth/actions";
-import { entrarComConvite, type EstadoForm } from "@/features/clube/actions";
+import { entrarComConvite } from "@/features/clube/actions";
+import type { EstadoForm } from "@/lib/resultado";
 
 export function BoasVindasForms() {
   const [convite, acaoConvite, entrando] = useActionState<EstadoForm<"convite">, FormData>(

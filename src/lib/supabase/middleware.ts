@@ -60,7 +60,8 @@ export async function atualizarSessao(request: NextRequest) {
   };
 
   if (!logado && !publica) {
-    return redirecionar("/login", pathname === "/" ? "" : `?voltar=${encodeURIComponent(pathname)}`);
+    const destino = pathname === "/" ? "" : `${pathname}${request.nextUrl.search}`;
+    return redirecionar("/login", destino ? `?voltar=${encodeURIComponent(destino)}` : "");
   }
 
   if (logado && (pathname === "/" || pathname === "/login")) {

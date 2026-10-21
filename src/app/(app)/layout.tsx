@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
-import type { CorPerfil } from "@/components/ui/Avatar";
+import type { CorPerfil, IconePerfil } from "@/components/ui/Avatar";
 import { ToastProvider } from "@/components/ui/Toast";
 import { getClubeAtual } from "@/features/clube/queries";
 import { createClient } from "@/lib/supabase/server";
@@ -12,7 +12,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   if (!claims) redirect("/login");
 
   const [{ data: perfil }, clube] = await Promise.all([
-    supabase.from("perfis").select("nome, cor").eq("id", claims.sub).maybeSingle(),
+    supabase.from("perfis").select("nome, cor, icone_avatar").eq("id", claims.sub).maybeSingle(),
     getClubeAtual(),
   ]);
 
@@ -22,6 +22,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   const usuario = {
     nome: (perfil?.nome as string | undefined) ?? String(claims.email ?? "").split("@")[0],
     cor: ((perfil?.cor as CorPerfil | undefined) ?? "purple") satisfies CorPerfil,
+    icone: (perfil?.icone_avatar as IconePerfil | "" | undefined) ?? "",
   };
 
   return (

@@ -102,7 +102,8 @@ Estados vazios sempre têm texto e uma ação ("Nenhum comentário ainda. Seja a
 ## Regras de mobile (obrigatórias)
 
 - Projetar primeiro para **390×844**. Desktop é a adaptação.
-- Abaixo de 760 px: navegação vira **barra inferior** (Início, Livro da vez, Debates, Mapa político, Mais). "Mais" abre um sheet com Estante, Pauta, Membros, Ajuda e Sair.
+- Menu em **seções** (`SECOES` em `src/lib/rotas.ts`): Início, Livros (Livro da vez · Estante · Meus livros), Debates (Debates · Pauta), Mapa político e Membros. Seção com mais de uma página mostra **sub-abas sublinhadas** no topo; cada página continua com rota própria. Página nova entra numa seção existente antes de virar seção nova.
+- Desktop: as seções viram abas no topo. Abaixo de 760 px: **barra inferior** com as seções + **Mais**. "Mais" abre um sheet com o que é da conta: Meu perfil, Trocar de grupo, Tema, Ajuda, Admin (só o dono) e Sair.
 - Área de toque **≥ 44×44 px** em tudo que é clicável (a WCAG 2.5.8 exige no mínimo 24; a meta do projeto é 44), com 8 px entre alvos. Ação principal na metade de baixo da tela.
 - Inputs com **font-size ≥ 16 px** (evita zoom no iOS) e `inputmode`/`autocomplete` corretos.
 - Respeitar `env(safe-area-inset-*)` (notch e barra do iPhone). Usar `100dvh`, nunca `100vh` sozinho.
@@ -129,6 +130,17 @@ Estados vazios sempre têm texto e uma ação ("Nenhum comentário ainda. Seja a
 - Ordem embaralhada por pessoa (salvar a semente para a ordem não mudar ao retomar).
 - Linguagem **neutra**: nenhuma afirmação pode ser caricatura de um lado. Use o agente `content-balance-reviewer` ao mudar o texto.
 - O app sempre avisa: "É um jogo para puxar debate, não um teste científico."
+
+## Padrões de código
+
+- **Um componente por arquivo** em `features/<modulo>/` (ex: `ItemDebate.tsx`, `Presenca.tsx`). Arquivo passando de ~250 linhas é sinal de que dá pra dividir. Regra pura (cálculo, filtro, contagem) vai num `.ts` sem React, com teste (`enquete.ts` + `enquete.test.ts`).
+- **Formulários**: `useActionState` + `useRetornoForm(estado, formRef, { desfazer?, aoOk?, limpar? })` (`components/ui/useRetornoForm.ts`). Ele faz o toast, o Desfazer e o foco no primeiro campo inválido; não repita esse `useEffect` à mão.
+- **Server actions** devolvem `EstadoForm` (formulário) ou `Resultado<T>` (botão), os dois de `lib/resultado.ts`. Use `ERRO_REDE` e `DUPLICADO` de lá. Toda entrada passa por um schema Zod em `schemas.ts`, **com mensagem em pt-BR em cada regra** (sem mensagem, o Zod mostra inglês para a pessoa).
+- **Uma fonte da verdade**: listas de opções (ex: `components/ui/avatar/opcoes.ts`) alimentam o componente e o schema; nunca repita a lista à mão no `z.enum`.
+- **Utilitários compartilhados**: datas em `lib/datas.ts` (`formatarData`, `formatarDataComDia`, `formatarDia`), texto em `lib/texto.ts` (`normalizar`, `slug`), porcentagem em `features/livro/regras.ts`. Não formate data nem tire acento inline.
+- **Cores**: só tokens de `globals.css` (`bg-card`, `text-accent`, `bg-perfil-green`…). Arte com cor fixa (logo, ilustrações do avatar) fica em `.ts` (`lib/logo.ts`, `components/ui/avatar/arte.ts`), nunca em `.tsx`.
+- **Dados do servidor**: página logada lê com `getClubeAtual()` e queries de `features/*/queries.ts`; para mostrar um item, crie uma query de um item (ex: `getDebate`), não filtre a lista inteira. Depois de uma action, `revalidatePath` atualiza a tela; não sincronize estado com eventos no `window`.
+- **Moldura logada**: `components/layout/AppShell.tsx` só compõe as partes de `components/layout/shell/` (Cabecalho, BarraInferior, Menus) e controla qual janela está aberta.
 
 ## Como trabalhar neste repo
 

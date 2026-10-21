@@ -6,11 +6,11 @@ import { Capa } from "@/components/ui/Capa";
 import { Card, Pill } from "@/components/ui/Card";
 import { TituloComInfo } from "@/components/ui/InfoPagina";
 import { sobreDaPagina } from "@/components/ui/PageHead";
-import { ProgressBar } from "@/components/ui/ProgressBar";
 import { getClubeAtual, listarPessoas } from "@/features/clube/queries";
 import { listarDebates, separarDebates } from "@/features/debates/queries";
 import { ProgressoGrupo } from "@/features/livro/ProgressoGrupo";
-import { getLivroAtual, listarProgresso } from "@/features/livro/queries";
+import { MetaLeitura } from "@/features/livro/MetaLeitura";
+import { getLivroAtual, getMetaAtual, listarProgresso } from "@/features/livro/queries";
 import { porcentagem } from "@/features/livro/regras";
 import { getMeuQuiz } from "@/features/mapa/queries";
 import { formatarDataComDia } from "@/lib/datas";
@@ -26,8 +26,11 @@ export default async function InicioPage() {
     listarDebates(clube.id),
     getMeuQuiz(clube.uid),
   ]);
-  const progresso = livro ? await listarProgresso(clube.id, livro.id) : [];
-  const minhaPagina = progresso.find((p) => p.id === clube.uid)?.pagina ?? 0;
+  const [progresso, meta] = livro
+    ? await Promise.all([listarProgresso(clube.id, livro.id), getMetaAtual(livro.id)])
+    : [[], null];
+  // Só quem cadastrou o exemplar em Meus livros tem progresso (na própria edição).
+  const eu = progresso.find((p) => p.id === clube.uid);
   const nome = pessoas.find((p) => p.id === clube.uid)?.nome ?? "";
   const { agenda } = separarDebates(debates);
   const aoVivo = agenda.find((d) => d.status === "ao_vivo");
@@ -36,7 +39,10 @@ export default async function InicioPage() {
 
   return (
     <>
-      <AoVivo canal={`inicio-${clube.id}`} tabelas={["progresso_leitura", "debates"]} />
+      <AoVivo
+        canal={`inicio-${clube.id}`}
+        tabelas={["progresso_leitura", "debates", "metas", "metas_alcancadas"]}
+      />
       <div className="mb-3.5 animate-rise rounded-2xl bg-grad p-5 text-white">
         <TituloComInfo titulo="Início" sobre={sobreDaPagina("Início") ?? ""} className="mt-0">
           E aí{nome ? `, ${nome}` : ""} 👋
@@ -44,7 +50,7 @@ export default async function InicioPage() {
         <p className="m-0 text-white/90">
           {aoVivo ? (
             <>
-              🔴 Debate acontecendo agora: <b>{aoVivo.tema}</b>
+              Debate em andamento: <b>{aoVivo.tema}</b>
             </>
           ) : (
             `Este é o resumo do grupo ${clube.nome} nesta semana.`
@@ -61,13 +67,24 @@ export default async function InicioPage() {
               <div>
                 <h2 className="mt-0 mb-0.5 text-lg font-bold">{livro.titulo}</h2>
                 <p className="mt-0 mb-1.5 text-muted">{livro.autor}</p>
-                <p className="mt-0 mb-2.5">
-                  Você está na pág. <b>{minhaPagina}</b> ({porcentagem(minhaPagina, livro.paginas)}
-                  %)
-                </p>
-                <Link href="/livro" className={classesBotao("primary", "small")}>
-                  Atualizar página
-                </Link>
+                {eu ? (
+                  <>
+                    <p className="mt-0 mb-2.5">
+                      Você está na pág. <b>{eu.pagina}</b> de {eu.paginasEdicao} (
+                      {porcentagem(eu.pagina, eu.paginasEdicao)}%)
+                    </p>
+                    <Link href="/livro" className={classesBotao("primary", "small")}>
+                      Atualizar página
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <p className="mt-0 mb-2.5 text-muted">Cadastre seu exemplar pra acompanhar.</p>
+                    <Link href="/meus-livros" className={classesBotao("primary", "small")}>
+                      Cadastrar exemplar
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           ) : (
@@ -82,34 +99,10 @@ export default async function InicioPage() {
 
         <Card>
           <Pill>Meta da semana</Pill>
-          {livro?.meta ? (
-            <>
-              <h2 className="mt-2.5 mb-0.5 text-lg font-bold">
-                Ler até a pág. {livro.meta.pagina}
-              </h2>
-              <p className="mt-0 mb-2 text-muted">
-                Prazo:{" "}
-                {new Date(`${livro.meta.prazo}T12:00:00`).toLocaleDateString("pt-BR", {
-                  weekday: "long",
-                  day: "2-digit",
-                  month: "short",
-                })}
-              </p>
-              <ProgressBar
-                valor={Math.min(minhaPagina, livro.meta.pagina)}
-                max={livro.meta.pagina}
-                rotulo="Progresso da meta"
-              />
-              <p className="mt-2 mb-0">
-                {minhaPagina >= livro.meta.pagina ? (
-                  "✅ Meta batida!"
-                ) : (
-                  <>
-                    Faltam <b>{livro.meta.pagina - minhaPagina}</b> páginas
-                  </>
-                )}
-              </p>
-            </>
+          {meta ? (
+            <div className="mt-2.5">
+              <MetaLeitura meta={meta} eu={clube.uid} leitores={progresso.length} />
+            </div>
           ) : (
             <p className="mt-2.5 mb-0 text-muted">
               Sem meta esta semana. Quem modera o grupo define a meta em Livro da vez.
@@ -162,8 +155,8 @@ export default async function InicioPage() {
       )}
 
       {livro && (
-        <Card titulo="Progresso do grupo" id="progresso" className="mt-3.5">
-          <ProgressoGrupo pessoas={progresso} total={livro.paginas} eu={clube.uid} />
+        <Card titulo="Quem está lendo" id="progresso" className="mt-3.5">
+          <ProgressoGrupo pessoas={progresso} eu={clube.uid} />
         </Card>
       )}
     </>

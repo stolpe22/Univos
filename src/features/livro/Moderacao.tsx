@@ -1,114 +1,114 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import { useActionState, useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { Sheet } from "@/components/ui/Sheet";
 import { useToast } from "@/components/ui/Toast";
+import { useRetornoForm } from "@/components/ui/useRetornoForm";
 import type { EstadoForm } from "@/lib/resultado";
-import { avancarLivro, definirMeta } from "./actions";
+import { hojeLocal } from "@/lib/datas";
+import { definirMeta, recolocarMeta, removerMeta, terminarLivro } from "./actions";
 
-/** Meta da semana (só moderador vê). */
-export function MetaForm({
-  total,
-  meta,
-}: {
-  total: number;
-  meta: { pagina: number; prazo: string } | null;
-}) {
+/**
+ * Meta da semana em texto livre (só moderador vê). Mudar cria uma meta nova, e quem
+ * já tinha chegado na anterior marca de novo. Tirar tem Desfazer.
+ */
+export function MetaForm({ meta }: { meta: { id: number; texto: string; prazo: string } | null }) {
   const { toast } = useToast();
-  const [estado, acao, salvando] = useActionState<EstadoForm<"pagina" | "prazo">, FormData>(
+  const [estado, acao, salvando] = useActionState<EstadoForm<"texto" | "prazo">, FormData>(
     definirMeta,
     null,
   );
   const form = useRef<HTMLFormElement>(null);
+  useRetornoForm(estado, form);
+  const [tirando, startTransition] = useTransition();
   const erros = estado && !estado.ok ? estado.erros : {};
   const valores = estado && !estado.ok ? estado.valores : {};
-  const hoje = new Date().toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
+  const [hoje] = useState(hojeLocal);
 
-  useEffect(() => {
-    if (!estado) return;
-    if (estado.ok) toast(estado.mensagem);
-    else if (estado.erros.geral) toast(estado.erros.geral);
-    else form.current?.querySelector<HTMLInputElement>("[aria-invalid=true]")?.focus();
-  }, [estado, toast]);
+  function tirar() {
+    if (!meta) return;
+    startTransition(async () => {
+      const r = await removerMeta(meta.id);
+      if (!r.ok) return toast(r.erro);
+      toast("Meta tirada.", {
+        desfazer: async () => {
+          const volta = await recolocarMeta(r.dados);
+          if (!volta.ok) throw new Error(volta.erro);
+        },
+      });
+    });
+  }
 
   return (
     <form ref={form} action={acao} noValidate className="grid gap-2.5">
-      <div className="grid grid-cols-2 gap-2.5">
-        <Field
-          label="Ler até a página"
-          name="pagina"
-          type="number"
-          inputMode="numeric"
-          min={1}
-          max={total}
-          defaultValue={valores.pagina ?? meta?.pagina ?? ""}
-          erro={erros.pagina}
-        />
-        <Field
-          label="Prazo"
-          name="prazo"
-          type="date"
-          min={hoje}
-          defaultValue={valores.prazo ?? meta?.prazo ?? ""}
-          erro={erros.prazo}
-        />
+      <Field
+        label="Até onde ler"
+        name="texto"
+        autoComplete="off"
+        enterKeyHint="next"
+        maxLength={120}
+        placeholder="Ex: Capítulo 5"
+        hint="Use capítulo ou parte, que é igual em toda edição. Cada pessoa marca quando chegar."
+        defaultValue={valores.texto ?? meta?.texto ?? ""}
+        erro={erros.texto}
+      />
+      <Field
+        label="Prazo"
+        name="prazo"
+        type="date"
+        min={hoje}
+        // o dia pode virar entre o servidor e o navegador
+        suppressHydrationWarning
+        defaultValue={valores.prazo ?? meta?.prazo ?? ""}
+        erro={erros.prazo}
+      />
+      <div className="flex flex-wrap gap-2">
+        <Button type="submit" variante="ghost" disabled={salvando}>
+          {salvando ? "Salvando…" : meta ? "Mudar a meta" : "Definir meta"}
+        </Button>
+        {meta && (
+          <Button variante="ghost" disabled={tirando} onClick={tirar}>
+            Tirar a meta
+          </Button>
+        )}
       </div>
-      <Button type="submit" variante="ghost" disabled={salvando}>
-        {salvando ? "Salvando…" : meta ? "Mudar a meta" : "Definir meta"}
-      </Button>
     </form>
   );
 }
 
-/**
- * Termina o livro da vez (ou começa o primeiro). Não tem Desfazer, então pede confirmação.
- */
-export function TrocarLivro({ temAtual, proximo }: { temAtual: boolean; proximo: string | null }) {
+/** Termina o livro da vez. Não tem Desfazer, então pede confirmação. */
+export function TerminarLivro({ titulo }: { titulo: string }) {
   const { toast } = useToast();
   const [confirmando, setConfirmando] = useState(false);
-  const [trocando, startTransition] = useTransition();
+  const [terminando, startTransition] = useTransition();
 
-  function trocar() {
+  function terminar() {
     setConfirmando(false);
     startTransition(async () => {
-      const r = await avancarLivro();
-      if (!r.ok) return toast(r.erro);
+      const r = await terminarLivro();
       toast(
-        r.dados.proximo
-          ? `“${r.dados.proximo}” é o novo livro da vez.`
-          : "Livro terminado. A fila está vazia: sugira o próximo na Estante.",
+        r.ok ? `“${titulo}” foi para os lidos do grupo. Escolham o próximo na Estante.` : r.erro,
       );
     });
   }
 
   return (
     <>
-      <Button
-        variante={temAtual ? "ghost" : "primary"}
-        onClick={() => setConfirmando(true)}
-        disabled={trocando || (!temAtual && !proximo)}
-      >
-        {trocando ? "Trocando…" : temAtual ? "Terminamos este livro" : "Começar o mais votado"}
+      <Button variante="ghost" onClick={() => setConfirmando(true)} disabled={terminando}>
+        {terminando ? "Terminando…" : "Terminamos este livro"}
       </Button>
-      <Sheet
-        aberto={confirmando}
-        aoFechar={() => setConfirmando(false)}
-        titulo={temAtual ? "Terminar o livro?" : "Começar o próximo livro?"}
-      >
+      <Sheet aberto={confirmando} aoFechar={() => setConfirmando(false)} titulo="Terminar o livro?">
         <p className="mt-1 mb-4">
-          {temAtual && "O livro da vez vai para Já lidos, e a meta da semana é apagada. "}
-          {proximo
-            ? `“${proximo}”, o mais votado da fila, vira o livro da vez.`
-            : "A fila está vazia, então fica sem livro da vez até alguém sugerir um."}{" "}
-          Isso não dá pra desfazer.
+          “{titulo}” continua na Estante, marcado como lido pelo grupo, e a meta da semana sai.
+          Depois vocês escolhem o próximo juntos. Isso não dá pra desfazer.
         </p>
         <div className="flex justify-end gap-2">
           <Button variante="ghost" onClick={() => setConfirmando(false)}>
             Cancelar
           </Button>
-          <Button onClick={trocar}>{temAtual ? "Terminar livro" : "Começar"}</Button>
+          <Button onClick={terminar}>Terminar livro</Button>
         </div>
       </Sheet>
     </>

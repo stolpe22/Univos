@@ -1,3 +1,5 @@
+import { normalizar } from "@/lib/texto";
+
 /**
  * Perguntas da Ajuda, por seção. A chave é a mesma de `ajuda` em src/lib/rotas.ts.
  * Toda feature nova adiciona aqui 2 a 4 perguntas (heurística 10).
@@ -31,6 +33,11 @@ export const AJUDA: Record<string, SecaoAjuda> = {
           "Toque na lupa (Buscar) no topo, ou aperte Ctrl+K no computador. Dá pra achar páginas, livros, debates, temas da pauta, pessoas e perguntas da ajuda, sem precisar acertar acento.",
       },
       {
+        pergunta: "Onde fica cada coisa no menu?",
+        resposta:
+          "O menu tem 5 partes: Início, Livros (Livro da vez, Estante e Meus livros), Debates (agenda e Pauta), Mapa político e Membros. Dentro de Livros e de Debates, as abas no topo da página trocam entre elas. No celular, Mais guarda seu perfil, a troca de grupo, o tema, a Ajuda e Sair.",
+      },
+      {
         pergunta: "Como volto para cá?",
         resposta: "Toque na logo Uni-vos no topo ou em Início.",
       },
@@ -61,21 +68,31 @@ export const AJUDA: Record<string, SecaoAjuda> = {
         resposta: "Sim. Toque em Apagar e, se foi engano, em Desfazer logo em seguida.",
       },
       {
-        pergunta: "Quem define a meta da semana?",
+        pergunta: "Minha edição tem outro número de páginas. E aí?",
         resposta:
-          "Quem modera o grupo, no card Moderação do Livro da vez: escolhe até que página ler e o prazo.",
+          "Sem problema: cadastre seu exemplar em Meus livros, com o total de páginas da sua edição. Sua página e a porcentagem usam a sua edição, e os comentários sem spoiler comparam a parte do livro, não o número da página.",
+      },
+      {
+        pergunta: "Por que não apareço em Quem está lendo?",
+        resposta:
+          "A lista mostra só quem cadastrou o exemplar do livro em Meus livros. Cadastre o seu (com o total de páginas da sua edição) e você aparece lá, com a página e a porcentagem.",
+      },
+      {
+        pergunta: "Como funciona a meta da semana?",
+        resposta:
+          "Quem modera o grupo escreve até onde ler (ex: Capítulo 5) e o prazo, no card Moderação. Quando você chegar lá, toque em Cheguei! — todo mundo vê quem já chegou. Se tocou sem querer, toque em Desfazer.",
       },
       {
         pergunta: "Como trocamos de livro?",
         resposta:
-          "Quando o grupo terminar, quem modera toca em Terminamos este livro. Ele vai para Já lidos e o mais votado da Estante vira o livro da vez.",
+          "Quando o grupo terminar, quem modera toca em Terminamos este livro. Ele continua na Estante, marcado como lido pelo grupo. O próximo não começa sozinho: vocês combinam qual ler e quem modera toca em Começar como livro da vez.",
       },
     ],
   },
   debates: {
     titulo: "Debates",
     sobre:
-      "A agenda dos debates do grupo. Confirme presença, marque um debate novo e vote na enquete de antes e depois pra ver quem mudou de ideia. Cada debate tem um formato: rodada com FINALIZADO! (uma pessoa fala por vez), clube do livro ou livre.",
+      "A agenda dos debates do grupo. Confirme presença, compartilhe o link e vote na pergunta inicial antes e depois pra ver quem mudou de ideia. Depois do debate, o grupo também pode propor uma enquete de posicionamento. Cada debate tem um formato: rodada com FINALIZADO! (uma pessoa fala por vez), clube do livro ou livre.",
     perguntas: [
       {
         pergunta: "Qual é a regra do FINALIZADO!?",
@@ -93,16 +110,22 @@ export const AJUDA: Record<string, SecaoAjuda> = {
       {
         pergunta: "Como funciona a enquete do debate?",
         resposta:
-          "Qualquer pessoa propõe uma pergunta (ex: Privatizar os Correios?) e um moderador aprova. Antes do debate todo mundo vota a favor, contra ou indeciso; quando o debate termina, vota de novo. O app mostra quem manteve e quem mudou de ideia.",
+          "A pergunta inicial é proposta antes do debate e precisa da aprovação de quem modera. Depois de encerrar, também dá pra propor uma enquete de posicionamento. Nas duas, cada pessoa pode registrar como pensava antes e como ficou depois; quem não votou antes pode registrar essa posição histórica ao final. Também dá pra sugerir outras conclusões e votar concordo ou discordo.",
       },
       {
         pergunta: "A enquete é anônima?",
-        resposta: "Não. O voto é aberto: todo mundo vê quem votou o quê, antes e depois.",
+        resposta:
+          "Não. Os votos das enquetes e das conclusões são abertos: todo mundo vê quem votou o quê.",
       },
       {
         pergunta: "Quem começa e encerra o debate?",
         resposta:
-          "Quem marcou o debate ou quem modera o grupo, pelos botões Começar agora e Encerrar debate.",
+          "Quem marcou o debate ou quem modera pode iniciar e encerrar. Iniciar só marca o debate como em andamento no Uni-vos; não abre chamada nem transmissão. Encerrar abre a votação de depois.",
+      },
+      {
+        pergunta: "Como compartilho um debate?",
+        resposta:
+          "Use Compartilhar no WhatsApp ou Copiar link no card do debate. Quem abrir o link vai direto para ele; precisa entrar na conta e fazer parte do grupo para votar.",
       },
     ],
   },
@@ -138,25 +161,47 @@ export const AJUDA: Record<string, SecaoAjuda> = {
   estante: {
     titulo: "Estante",
     sobre:
-      "Os livros do grupo. Sugira o que quer ler e vote na fila: o mais votado vira o próximo livro da vez. Embaixo ficam os que o grupo já leu.",
+      "Todos os livros do grupo num lugar só, inclusive os já lidos. Vote no que quer ler, veja quem tem cada livro, o que o grupo já leu junto e o que cada pessoa leu.",
     perguntas: [
       {
         pergunta: "Como o próximo livro é escolhido?",
-        resposta: "O livro mais votado da fila vira o próximo livro da vez.",
+        resposta:
+          "Pelos votos e pela conversa. O mais votado aparece com 🥇, e cada livro mostra quantas pessoas já têm o exemplar. Quando o grupo combinar qual vai ler junto, quem modera toca em Começar como livro da vez nele.",
+      },
+      {
+        pergunta: "Qual a diferença entre O grupo leu e Eu li?",
+        resposta:
+          "O grupo leu mostra só os livros que quem modera marcou como terminados no Livro da vez. Ali você escolhe uma Pessoa e vê o que ela Leu, Está lendo ou Os dois, só nos livros do grupo (Com o grupo) ou em tudo, inclusive o que leu por conta própria (Tudo). Eu li mostra os livros em que você marcou Já li no seu exemplar. Livro lido continua na Estante.",
+      },
+      {
+        pergunta: "Sugerir um livro é o mesmo que votar nele?",
+        resposta:
+          "Não. Sugerir só coloca o livro na estante. Votar (▲ Votar) é dizer que você quer ler: os livros que o grupo ainda não leu ficam em ordem de votos. Se quiser ler o que você mesmo sugeriu, vote nele também.",
+      },
+      {
+        pergunta: "O que são as bolinhas no canto de cada livro?",
+        resposta:
+          "São as pessoas daquele livro: ao lado do ✓ quem já leu, ao lado do 📖 quem está lendo. Isso vem do que cada uma marcou no próprio exemplar, em Exemplares e progresso do grupo.",
       },
       {
         pergunta: "Como sugiro um livro?",
-        resposta: "Preencha título, autor e número de páginas em Sugerir livro.",
+        resposta:
+          "Preencha título, autor e páginas aproximadas. Em Classificação e dados do catálogo, você também pode indicar tema, tipo, nível, ano, editora, preço e uma nota.",
       },
       {
-        pergunta: "Posso tirar um livro da fila?",
+        pergunta: "Como registro meu exemplar e meu progresso?",
         resposta:
-          "Sim, se foi você que sugeriu (ou se você modera o grupo). Toque em Tirar da fila; se foi engano, toque em Desfazer.",
+          "Na estante, abra Exemplares e progresso do grupo no livro e informe o total de páginas da sua edição, a página atual e a situação. O grupo verá esses dados; eles são diferentes da estimativa da edição de referência.",
+      },
+      {
+        pergunta: "Posso tirar um livro da estante?",
+        resposta:
+          "Sim, se foi você que sugeriu (ou se você modera o grupo) e o grupo ainda não leu. Toque em Tirar da estante; se foi engano, toque em Desfazer.",
       },
     ],
   },
   pauta: {
-    titulo: "Pauta",
+    titulo: "Pautas",
     sobre:
       "Temas que o grupo quer debater. Proponha, vote nos que te interessam e use Virar debate pra marcar o debate já com o tema preenchido.",
     perguntas: [
@@ -183,7 +228,7 @@ export const AJUDA: Record<string, SecaoAjuda> = {
       {
         pergunta: "O que aparece no card de cada pessoa?",
         resposta:
-          "Livros sugeridos, debates confirmados e o resultado do mapa político, se a pessoa já respondeu.",
+          "Livros sugeridos, livros adquiridos (exemplares cadastrados em Meus livros, com o progresso), debates confirmados e o resultado do mapa político. Toque no card para ver o perfil completo.",
       },
       {
         pergunta: "Como chamo alguém pro grupo?",
@@ -217,6 +262,27 @@ export const AJUDA: Record<string, SecaoAjuda> = {
       },
     ],
   },
+  "meu-perfil": {
+    titulo: "Meu perfil",
+    sobre: "Personalize seu nome e avatar, e troque sua senha de acesso.",
+    perguntas: [
+      {
+        pergunta: "Como mudo a cor ou o ícone do meu avatar?",
+        resposta:
+          "Abra Meu perfil, escolha uma cor e selecione suas iniciais ou um dos ícones. A prévia mostra como vai aparecer antes de salvar.",
+      },
+      {
+        pergunta: "Quem vê meu nome?",
+        resposta:
+          "O nome aparece para as pessoas dos grupos de que você participa, em comentários e votações.",
+      },
+      {
+        pergunta: "Troquei minha senha. Preciso entrar de novo?",
+        resposta:
+          "Não. A senha nova vale no próximo acesso; você continua conectado neste aparelho.",
+      },
+    ],
+  },
   admin: {
     titulo: "Admin",
     sobre:
@@ -240,11 +306,6 @@ export const AJUDA: Record<string, SecaoAjuda> = {
     ],
   },
 };
-
-/** Minúsculas e sem acento, para a busca achar "politico" em "político". */
-export function normalizar(texto: string) {
-  return texto.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-}
 
 /** Seções na ordem de exibição (a da página atual primeiro), filtradas pela busca. */
 export function filtrarAjuda(busca: string, secaoAtual?: string) {

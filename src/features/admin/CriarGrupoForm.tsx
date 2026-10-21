@@ -1,24 +1,17 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useRef } from "react";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
-import { useToast } from "@/components/ui/Toast";
-import type { EstadoForm } from "@/features/clube/actions";
+import { useRetornoForm } from "@/components/ui/useRetornoForm";
+import type { EstadoForm } from "@/lib/resultado";
 import { criarGrupo } from "./actions";
 
 export function CriarGrupoForm() {
-  const { toast } = useToast();
   const [estado, acao, criando] = useActionState<EstadoForm<"nome">, FormData>(criarGrupo, null);
-  const nomeRef = useRef<HTMLInputElement>(null);
+  const form = useRef<HTMLFormElement>(null);
+  useRetornoForm(estado, form);
   const erroNome = estado && !estado.ok ? estado.erros.nome : undefined;
-
-  useEffect(() => {
-    if (!estado) return;
-    if (estado.ok) toast(estado.mensagem ?? "Grupo criado.");
-    else if (estado.erros.nome) nomeRef.current?.focus();
-    else if (estado.erros.geral) toast(estado.erros.geral);
-  }, [estado, toast]);
 
   return (
     <section
@@ -31,9 +24,8 @@ export function CriarGrupoForm() {
       <p className="mt-0 mb-3 text-muted">
         Todo grupo é privado: só entra quem recebe um convite. Você entra como moderador.
       </p>
-      <form action={acao} noValidate className="grid gap-2.5">
+      <form ref={form} action={acao} noValidate className="grid gap-2.5">
         <Field
-          ref={nomeRef}
           label="Nome do grupo"
           name="nome"
           autoComplete="off"

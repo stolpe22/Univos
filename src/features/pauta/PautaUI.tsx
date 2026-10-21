@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useRef, useTransition } from "react";
+import { useActionState, useRef, useTransition } from "react";
 import { BotaoVoto } from "@/components/ui/BotaoVoto";
 import { Button, classesBotao } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { useToast } from "@/components/ui/Toast";
+import { useRetornoForm } from "@/components/ui/useRetornoForm";
 import type { EstadoForm } from "@/lib/resultado";
 import { proporTema, tirarTema, voltarTema, votarTema } from "./actions";
 import type { Tema } from "./queries";
@@ -80,29 +81,14 @@ function ItemTema({ tema: t, eu, podeTirar }: { tema: Tema; eu: string; podeTira
 }
 
 export function ProporTemaForm() {
-  const { toast } = useToast();
   const [estado, acao, enviando] = useActionState<EstadoForm<"tema">, FormData>(proporTema, null);
-  const ref = useRef<HTMLInputElement>(null);
+  const form = useRef<HTMLFormElement>(null);
+  useRetornoForm(estado, form, { desfazer: (id) => tirarTema(id as number) });
   const erro = estado && !estado.ok ? estado.erros.tema : undefined;
 
-  useEffect(() => {
-    if (!estado) return;
-    if (estado.ok) {
-      const id = estado.desfazer as number;
-      toast(estado.mensagem, {
-        desfazer: async () => {
-          const r = await tirarTema(id);
-          if (!r.ok) throw new Error(r.erro);
-        },
-      });
-    } else if (estado.erros.tema) ref.current?.focus();
-    else if (estado.erros.geral) toast(estado.erros.geral);
-  }, [estado, toast]);
-
   return (
-    <form action={acao} noValidate className="grid gap-3">
+    <form ref={form} action={acao} noValidate className="grid gap-3">
       <Field
-        ref={ref}
         label="Tema"
         name="tema"
         autoComplete="off"

@@ -15,7 +15,7 @@ const DESTINO: Record<string, (l: Linha) => { grupo: GrupoResultado; href: strin
     href: l.detalhe?.endsWith("livro da vez") ? "/livro" : `/estante#livro-${l.id}`,
   }),
   debate: (l) => ({ grupo: "Debates", href: `/debates#debate-${l.id}` }),
-  tema: (l) => ({ grupo: "Pauta", href: `/pauta#tema-${l.id}` }),
+  tema: (l) => ({ grupo: "Pautas", href: `/pauta#tema-${l.id}` }),
   pessoa: (l) => ({ grupo: "Pessoas", href: `/membros/${l.id}` }),
 };
 

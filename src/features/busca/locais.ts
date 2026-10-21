@@ -1,4 +1,5 @@
-import { AJUDA, normalizar } from "@/features/ajuda/conteudo";
+import { AJUDA } from "@/features/ajuda/conteudo";
+import { normalizar } from "@/lib/texto";
 import { ROTA_ADMIN, ROTAS, type Rota } from "@/lib/rotas";
 import type { Resultado } from "./tipos";
 
@@ -8,7 +9,7 @@ const APELIDOS: Record<string, string> = {
   "/livro": "livro da vez leitura pagina comentario spoiler progresso",
   "/debates": "debates agenda presenca finalizado marcar",
   "/mapa": "mapa politico quiz questionario economia costumes",
-  "/estante": "estante fila votar sugerir livros lidos",
+  "/estante": "estante votar sugerir livros lidos quem leu",
   "/pauta": "pauta temas propor votar virar debate",
   "/membros": "membros pessoas convite convidar link moderador",
   "/admin": "admin grupos moderadores auditoria criar grupo",

@@ -16,10 +16,19 @@ export const comentarioSchema = z.object({
     .max(500, "O comentário pode ter até 500 caracteres. Tente resumir."),
 });
 
-/** Meta da semana: até que página ler e até quando. */
-export function metaSchema(total: number) {
+/**
+ * Meta de leitura em texto livre ("Capítulo 5", "Até o fim da parte 2") e prazo.
+ * Não usa página: cada pessoa lê uma edição diferente.
+ */
+export function metaSchema(hoje: string) {
   return z.object({
-    pagina: paginaSchema(total).refine((p) => p > 0, "Escolha uma página maior que 0."),
-    prazo: z.iso.date("Escolha a data do prazo."),
+    texto: z
+      .string()
+      .trim()
+      .min(2, "Escreva até onde ler, ex: Capítulo 5.")
+      .max(120, "A meta pode ter até 120 caracteres. Tente resumir."),
+    prazo: z.iso
+      .date("Escolha a data do prazo.")
+      .refine((d) => d >= hoje, "Esse dia já passou. Escolha hoje ou uma data no futuro."),
   });
 }

@@ -4,7 +4,8 @@ import { Card, Pill } from "@/components/ui/Card";
 import { PageHead } from "@/components/ui/PageHead";
 import { REGRA_DA_CASA } from "@/features/ajuda/conteudo";
 import { getClubeAtual, podeModerar } from "@/features/clube/queries";
-import { ItemDebate, MarcarDebateForm } from "@/features/debates/DebatesUI";
+import { ItemDebate } from "@/features/debates/ItemDebate";
+import { MarcarDebateForm } from "@/features/debates/MarcarDebateForm";
 import { listarDebates, separarDebates } from "@/features/debates/queries";
 
 export const metadata: Metadata = { title: "Debates" };
@@ -15,7 +16,6 @@ export default async function DebatesPage({ searchParams }: PageProps<"/debates"
   const modera = podeModerar(clube);
   const { agenda, encerrados } = separarDebates(await listarDebates(clube.id));
   const temaInicial = typeof tema === "string" ? tema.slice(0, 120) : "";
-
   return (
     <>
       <AoVivo
@@ -39,7 +39,7 @@ export default async function DebatesPage({ searchParams }: PageProps<"/debates"
           <Card titulo="Agenda" id="agenda">
             {agenda.length === 0 ? (
               <p className="px-2 py-4 text-center text-muted">
-                Nenhum debate marcado. Marque o próximo no formulário ou pegue um tema da Pauta.
+                Nenhum debate marcado. Marque o próximo no formulário ou pegue um tema das Pautas.
               </p>
             ) : (
               <ul className="m-0 list-none divide-y divide-line p-0">

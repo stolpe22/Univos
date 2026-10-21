@@ -6,14 +6,11 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { COOKIE_GRUPO, getClubeAtual, podeModerar } from "./queries";
+import { ERRO_REDE, type EstadoForm } from "@/lib/resultado";
 import { conviteSchema, rotuloConviteSchema } from "./schemas";
 
-export type EstadoForm<C extends string> =
-  | { ok: true; mensagem?: string }
-  | { ok: false; erros: Partial<Record<C | "geral", string>>; valores: Partial<Record<C, string>> }
-  | null;
-
-const ERRO_REDE = "Não deu pra salvar agora. Confira sua internet e tente de novo.";
+// Reexportado para quem já importava daqui; a definição é a de lib/resultado.ts.
+export type { EstadoForm } from "@/lib/resultado";
 
 /** Entra pelo link colado na tela de boas-vindas. */
 export async function entrarComConvite(

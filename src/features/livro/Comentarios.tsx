@@ -1,24 +1,34 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import { useActionState, useRef, useState, useTransition } from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Field, classesInput } from "@/components/ui/Field";
 import { useToast } from "@/components/ui/Toast";
+import { useRetornoForm } from "@/components/ui/useRetornoForm";
 import type { EstadoForm } from "@/lib/resultado";
 import { apagarComentario, comentar, desfazerComentario } from "./actions";
-import type { Comentario } from "./queries";
+import type { ComentarioPosicionado } from "./queries";
 import { ehSpoiler } from "./regras";
 
-type Props = { comentarios: Comentario[]; minhaPagina: number; eu: string };
+type Props = {
+  comentarios: ComentarioPosicionado[];
+  /** Página de quem lê, na edição dela (marca o comentário novo). */
+  minhaPagina: number;
+  /** Quanto do livro quem lê já leu, de 0 a 1 (base do "sem spoiler"). */
+  minhaPosicao: number;
+  eu: string;
+};
 
-export function Comentarios({ comentarios, minhaPagina, eu }: Props) {
+/** Comentários sem spoiler: escondidos se foram escritos num ponto do livro depois do seu. */
+export function Comentarios({ comentarios, minhaPagina, minhaPosicao, eu }: Props) {
   const [revelados, setRevelados] = useState<Set<number>>(new Set());
 
   return (
     <>
       <p className="mt-0 mb-1 text-[13px] text-muted">
-        Comentários de páginas depois da sua ficam escondidos.
+        Comentários de trechos depois de onde você está ficam escondidos, mesmo que a edição de quem
+        escreveu seja diferente da sua.
       </p>
       {comentarios.length === 0 ? (
         <p className="px-2 py-4 text-center text-muted">
@@ -31,7 +41,7 @@ export function Comentarios({ comentarios, minhaPagina, eu }: Props) {
               key={c.id}
               c={c}
               meu={c.autor === eu}
-              escondido={ehSpoiler(c, minhaPagina, eu) && !revelados.has(c.id)}
+              escondido={ehSpoiler(c, minhaPosicao, eu) && !revelados.has(c.id)}
               revelar={() => setRevelados((s) => new Set(s).add(c.id))}
             />
           ))}
@@ -48,7 +58,7 @@ function ItemComentario({
   escondido,
   revelar,
 }: {
-  c: Comentario;
+  c: ComentarioPosicionado;
   meu: boolean;
   escondido: boolean;
   revelar: () => void;
@@ -71,11 +81,12 @@ function ItemComentario({
 
   return (
     <li className="flex items-start gap-2.5 py-3">
-      <Avatar nome={c.autorNome} cor={c.autorCor} />
+      <Avatar nome={c.autorNome} cor={c.autorCor} icone={c.autorIcone || null} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
           <small className="text-muted">
-            {c.autorNome} · pág. {c.pagina}
+            {c.autorNome} · pág. {c.pagina} de {c.paginasEdicaoAutor} ({Math.round(c.posicao * 100)}
+            % do livro)
           </small>
           {meu && (
             <button
@@ -90,7 +101,7 @@ function ItemComentario({
         </div>
         {escondido ? (
           <div className="mt-1 rounded-lg bg-accent-soft px-2.5 py-2 text-[13.5px]">
-            🙈 Comentário da pág. {c.pagina}, depois de onde você está.{" "}
+            🙈 Comentário de {Math.round(c.posicao * 100)}% do livro, depois de onde você está.{" "}
             <button
               type="button"
               onClick={revelar}
@@ -108,35 +119,17 @@ function ItemComentario({
 }
 
 function NovoComentario({ minhaPagina }: { minhaPagina: number }) {
-  const { toast } = useToast();
   const [estado, acao, publicando] = useActionState<EstadoForm<"texto">, FormData>(comentar, null);
   const [tamanho, setTamanho] = useState(0);
-  const ref = useRef<HTMLTextAreaElement>(null);
+  const form = useRef<HTMLFormElement>(null);
+  useRetornoForm(estado, form, {
+    desfazer: (id) => desfazerComentario({ apagar: id as number }),
+    aoOk: () => setTamanho(0),
+  });
   const erro = estado && !estado.ok ? estado.erros.texto : undefined;
 
-  useEffect(() => {
-    if (!estado) return;
-    if (estado.ok) {
-      const id = estado.desfazer as number;
-      toast(estado.mensagem, {
-        desfazer: async () => {
-          const r = await desfazerComentario({ apagar: id });
-          if (!r.ok) throw new Error(r.erro);
-        },
-      });
-    } else if (estado.erros.texto) ref.current?.focus();
-    else if (estado.erros.geral) toast(estado.erros.geral);
-  }, [estado, toast]);
-
   return (
-    <form
-      action={(f) => {
-        setTamanho(0);
-        return acao(f);
-      }}
-      noValidate
-      className="mt-3 grid gap-2"
-    >
+    <form ref={form} action={acao} noValidate className="mt-3 grid gap-2">
       <Field
         label={`Seu comentário (marcado na pág. ${minhaPagina})`}
         hint={`${tamanho}/500 caracteres`}
@@ -145,7 +138,6 @@ function NovoComentario({ minhaPagina }: { minhaPagina: number }) {
         {(controle) => (
           <textarea
             {...controle}
-            ref={ref}
             name="texto"
             rows={3}
             maxLength={500}

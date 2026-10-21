@@ -1,12 +1,20 @@
+import { corDoPerfil } from "@/components/ui/Avatar";
 import type { PessoaNoMapa } from "./queries";
-
-const FILL = { blue: "fill-blue", red: "fill-red", purple: "fill-purple", slate: "fill-muted" };
 
 /**
  * O grupo no mapa: economia no eixo horizontal (esquerda → direita) e costumes no
  * vertical (progressista embaixo, conservador em cima).
  */
-export function Bussola({ pessoas, eu }: { pessoas: PessoaNoMapa[]; eu?: string }) {
+export function Bussola({
+  pessoas,
+  eu,
+  className = "max-w-[420px]",
+}: {
+  pessoas: PessoaNoMapa[];
+  eu?: string;
+  /** Largura máxima (padrão 420 px). */
+  className?: string;
+}) {
   const com = pessoas.filter((p) => p.resultado);
   const t = (x: number, y: number, texto: string, rot?: string) => (
     <text x={x} y={y} textAnchor="middle" fontSize="11" className="fill-muted" transform={rot}>
@@ -27,7 +35,7 @@ export function Bussola({ pessoas, eu }: { pessoas: PessoaNoMapa[]; eu?: string 
               .join("; ")
           : "Ninguém respondeu ainda."
       }`}
-      className="mx-auto block w-full max-w-[420px] text-ink"
+      className={`mx-auto block w-full text-ink ${className}`}
     >
       <defs>
         <linearGradient id="mapa-fundo" x1="0" x2="1">
@@ -65,7 +73,7 @@ export function Bussola({ pessoas, eu }: { pessoas: PessoaNoMapa[]; eu?: string 
               cy={y}
               r="9"
               strokeWidth="2.5"
-              className={`${FILL[p.cor]} stroke-card`}
+              className={`${corDoPerfil(p.cor).preenchimento} stroke-card`}
             />
             <text
               x={x}

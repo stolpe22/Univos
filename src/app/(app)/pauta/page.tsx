@@ -5,7 +5,7 @@ import { getClubeAtual, podeModerar } from "@/features/clube/queries";
 import { ListaTemas, ProporTemaForm } from "@/features/pauta/PautaUI";
 import { listarTemas } from "@/features/pauta/queries";
 
-export const metadata: Metadata = { title: "Pauta" };
+export const metadata: Metadata = { title: "Pautas" };
 
 export default async function PautaPage() {
   const clube = await getClubeAtual();
@@ -15,7 +15,7 @@ export default async function PautaPage() {
   return (
     <>
       <PageHead
-        titulo="Pauta"
+        titulo="Pautas"
         descricao="Temas sugeridos para os próximos debates. Vote nos que você quer discutir."
       />
       <div className="grid gap-3.5 md:grid-cols-2">

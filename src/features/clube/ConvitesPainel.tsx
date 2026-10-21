@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useTransition } from "react";
+import { useActionState, useRef, useTransition } from "react";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { useToast } from "@/components/ui/Toast";
+import { useRetornoForm } from "@/components/ui/useRetornoForm";
 import { criarConvite, desativarConvite, type EstadoForm } from "./actions";
 import { formatarData } from "@/lib/datas";
 import type { Convite } from "./queries";
@@ -14,24 +15,13 @@ type Props = {
 };
 
 export function ConvitesPainel({ origem, convites }: Props) {
-  const { toast } = useToast();
   const [estado, acao, gerando] = useActionState<EstadoForm<"rotulo">, FormData>(
     criarConvite,
     null,
   );
-  const rotuloRef = useRef<HTMLInputElement>(null);
+  const form = useRef<HTMLFormElement>(null);
+  useRetornoForm(estado, form);
   const erroRotulo = estado && !estado.ok ? estado.erros.rotulo : undefined;
-
-  useEffect(() => {
-    if (!estado) return;
-    if (estado.ok) {
-      toast(estado.mensagem ?? "Link gerado."); // o React 19 já limpa o form depois da ação
-    } else if (estado.erros.rotulo) {
-      rotuloRef.current?.focus();
-    } else if (estado.erros.geral) {
-      toast(estado.erros.geral);
-    }
-  }, [estado, toast]);
 
   const totalEntradas = convites.reduce((n, c) => n + c.entradas.length, 0);
 
@@ -47,9 +37,8 @@ export function ConvitesPainel({ origem, convites }: Props) {
         Gere um link pra cada lugar onde for mandar. Assim dá pra ver por onde cada pessoa entrou.
       </p>
 
-      <form action={acao} noValidate className="grid gap-2.5">
+      <form ref={form} action={acao} noValidate className="grid gap-2.5">
         <Field
-          ref={rotuloRef}
           label="Nome do link"
           name="rotulo"
           autoComplete="off"

@@ -1,3 +1,11 @@
+# Uni-vos: instruções para agentes (Codex e outros)
+
+**Antes de qualquer mudança, leia o `CLAUDE.md` deste repositório inteiro.** Ele vale para
+todo agente, não só para o Claude: stack, design system (só tokens, nunca cor hex em
+componente), as 10 heurísticas de Nielsen, as regras de mobile, segurança (RLS, Zod em toda
+server action) e a seção "Padrões de código". Os guias completos estão em `docs/ux/` e as
+skills do projeto em `.claude/skills/` (leia o `SKILL.md` da tarefa, ex: `nova-feature`).
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 ## This is NOT the Next.js you know

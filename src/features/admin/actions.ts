@@ -1,11 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import type { EstadoForm } from "@/features/clube/actions";
+import { ERRO_REDE, type EstadoForm } from "@/lib/resultado";
 import { createClient } from "@/lib/supabase/server";
 import { nomeGrupoSchema, papelSchema } from "./schemas";
-
-const ERRO_REDE = "Não deu pra salvar agora. Confira sua internet e tente de novo.";
 
 /** Cria um grupo. Só o dono (o banco confere). Quem cria entra como moderador. */
 export async function criarGrupo(

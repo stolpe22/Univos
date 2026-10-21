@@ -12,8 +12,16 @@ export function sobreDaPagina(nome: string) {
  * Título da página. Use o mesmo nome da aba (heurística 4).
  * Quando o título é uma aba, ganha o "?" com o que a página faz.
  */
-export function PageHead({ titulo, descricao }: { titulo: string; descricao?: string }) {
-  const sobre = sobreDaPagina(titulo);
+export function PageHead({
+  titulo,
+  descricao,
+  ajuda,
+}: {
+  titulo: string;
+  descricao?: string;
+  ajuda?: string;
+}) {
+  const sobre = ajuda ? AJUDA[ajuda]?.sobre : sobreDaPagina(titulo);
   return (
     <div className="mb-3.5">
       {sobre ? (

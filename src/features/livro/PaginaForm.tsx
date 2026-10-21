@@ -1,50 +1,66 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { useActionState, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Field, classesInput } from "@/components/ui/Field";
-import { useToast } from "@/components/ui/Toast";
+import { useRetornoForm } from "@/components/ui/useRetornoForm";
 import type { EstadoForm } from "@/lib/resultado";
 import { salvarPagina, voltarPagina } from "./actions";
 import { passo } from "./regras";
 
-type Props = { total: number; minhaPagina: number; ultimaAtualizacao: string | null };
+type Props = {
+  /** Total de páginas da edição de quem lê (cadastrada em Meus livros). */
+  total: number;
+  minhaPagina: number;
+  ultimaAtualizacao: string | null;
+};
+
+/** O que salvarPagina devolve para o Desfazer: a página (e a edição) de antes. */
+type Anterior = {
+  livro: number;
+  anterior: {
+    pagina: number;
+    paginasEdicao: number;
+    edicaoConfirmada: boolean;
+    status: "nao_lido" | "lendo" | "lido";
+    atualizadoEm: string;
+  } | null;
+};
 
 export function PaginaForm({ total, minhaPagina, ultimaAtualizacao }: Props) {
-  const { toast } = useToast();
   const [estado, acao, salvando] = useActionState<EstadoForm<"pagina">, FormData>(
     salvarPagina,
     null,
   );
   const [valor, setValor] = useState(String(minhaPagina));
-  const ref = useRef<HTMLInputElement>(null);
+  const form = useRef<HTMLFormElement>(null);
+  useRetornoForm(estado, form, {
+    desfazer: async (dados) => {
+      const { livro, anterior } = dados as Anterior;
+      const r = await voltarPagina(livro, anterior);
+      if (r.ok) setValor(String(anterior?.pagina ?? 0));
+      return r;
+    },
+  });
   const erro = estado && !estado.ok ? estado.erros.pagina : undefined;
 
-  useEffect(() => {
-    if (!estado) return;
-    if (estado.ok) {
-      const antes = estado.desfazer as { livro: number; pagina: number } | undefined;
-      toast(estado.mensagem, {
-        desfazer: antes
-          ? async () => {
-              const r = await voltarPagina(antes.livro, antes.pagina);
-              if (!r.ok) throw new Error(r.erro);
-              setValor(String(antes.pagina));
-            }
-          : undefined,
-      });
-    } else if (estado.erros.pagina) {
-      ref.current?.focus();
-    } else if (estado.erros.geral) {
-      toast(estado.erros.geral);
-    }
-  }, [estado, toast]);
-
   return (
-    <form action={acao} noValidate className="grid gap-2.5">
+    <form ref={form} action={acao} noValidate className="grid gap-2.5">
       <Field
         label="Em que página você parou?"
-        hint={`De 0 a ${total}. ${ultimaAtualizacao ? `Última atualização: ${ultimaAtualizacao}.` : "Você ainda não atualizou."}`}
+        hint={
+          <>
+            Sua edição tem {total} páginas. Mudou de edição?{" "}
+            <Link href="/meus-livros" className="font-semibold text-accent underline">
+              Atualize em Meus livros
+            </Link>
+            .{" "}
+            {ultimaAtualizacao
+              ? `Última atualização: ${ultimaAtualizacao}.`
+              : "Você ainda não atualizou."}
+          </>
+        }
         erro={erro}
       >
         {(controle) => (
@@ -58,7 +74,6 @@ export function PaginaForm({ total, minhaPagina, ultimaAtualizacao }: Props) {
             </Button>
             <input
               {...controle}
-              ref={ref}
               name="pagina"
               type="number"
               inputMode="numeric"

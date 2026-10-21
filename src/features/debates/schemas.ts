@@ -56,3 +56,19 @@ export const perguntaSchema = z.object({
     .min(5, "Escreva a pergunta da enquete, ex: Privatizar os Correios?")
     .max(160, "A pergunta pode ter até 160 caracteres. Tente resumir."),
 });
+
+export const conclusaoSchema = z.object({
+  texto: z
+    .string()
+    .trim()
+    .min(5, "Escreva uma conclusão com pelo menos 5 caracteres.")
+    .max(240, "A conclusão pode ter até 240 caracteres. Tente resumir."),
+});
+
+export const comentarioDebateSchema = z.object({
+  texto: z
+    .string()
+    .trim()
+    .min(1, "Escreva um comentário.")
+    .max(1000, "O comentário pode ter até 1000 caracteres. Tente resumir."),
+});

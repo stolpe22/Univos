@@ -1,7 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { cache } from "react";
-import type { CorPerfil } from "@/components/ui/Avatar";
+import type { CorPerfil, IconePerfil } from "@/components/ui/Avatar";
 import { createClient } from "@/lib/supabase/server";
 
 /** Cookie com o grupo escolhido em "Trocar de grupo". */
@@ -115,18 +115,39 @@ export async function listarConvites(clubeId: string): Promise<Convite[]> {
   }));
 }
 
-export type Pessoa = { id: string; nome: string; cor: CorPerfil; papel: Papel };
+export type Pessoa = {
+  id: string;
+  nome: string;
+  cor: CorPerfil;
+  icone: IconePerfil | "";
+  papel: Papel;
+};
 
 /** Pessoas do grupo, em ordem alfabética. */
 export const listarPessoas = cache(async (clubeId: string): Promise<Pessoa[]> => {
   const supabase = await createClient();
   const { data } = await supabase
     .from("membros")
-    .select("papel, perfis!membros_user_id_fkey(id, nome, cor)")
+    .select("papel, perfis!membros_user_id_fkey(id, nome, cor, icone_avatar)")
     .eq("clube_id", clubeId);
 
-  type Linha = { papel: Papel; perfis: { id: string; nome: string; cor: CorPerfil } | null };
+  type Linha = {
+    papel: Papel;
+    perfis: { id: string; nome: string; cor: CorPerfil; icone_avatar: IconePerfil | "" } | null;
+  };
   return ((data ?? []) as unknown as Linha[])
-    .flatMap((m) => (m.perfis ? [{ ...m.perfis, papel: m.papel }] : []))
+    .flatMap((m) =>
+      m.perfis
+        ? [
+            {
+              id: m.perfis.id,
+              nome: m.perfis.nome,
+              cor: m.perfis.cor,
+              icone: m.perfis.icone_avatar,
+              papel: m.papel,
+            },
+          ]
+        : [],
+    )
     .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
 });

@@ -1,8 +1,16 @@
 import "server-only";
 import type { Papel } from "@/features/clube/queries";
+import type { CorPerfil, IconePerfil } from "@/components/ui/Avatar";
 import { createClient } from "@/lib/supabase/server";
 
-export type PessoaDoGrupo = { id: string; nome: string; papel: Papel; entrouEm: string };
+export type PessoaDoGrupo = {
+  id: string;
+  nome: string;
+  cor: CorPerfil;
+  icone: IconePerfil | "";
+  papel: Papel;
+  entrouEm: string;
+};
 export type GrupoAdmin = { id: string; nome: string; pessoas: PessoaDoGrupo[] };
 
 /** Todos os grupos com as pessoas de cada um. Só o dono enxerga todos (RLS). */
@@ -10,7 +18,9 @@ export async function listarGruposAdmin(): Promise<GrupoAdmin[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("clubes")
-    .select("id, nome, membros(user_id, papel, entrou_em, perfis!membros_user_id_fkey(nome))")
+    .select(
+      "id, nome, membros(user_id, papel, entrou_em, perfis!membros_user_id_fkey(nome, cor, icone_avatar))",
+    )
     .order("criado_em");
 
   type Linha = {
@@ -20,7 +30,7 @@ export async function listarGruposAdmin(): Promise<GrupoAdmin[]> {
       user_id: string;
       papel: Papel;
       entrou_em: string;
-      perfis: { nome: string } | null;
+      perfis: { nome: string; cor: CorPerfil; icone_avatar: IconePerfil | "" } | null;
     }[];
   };
 
@@ -31,6 +41,8 @@ export async function listarGruposAdmin(): Promise<GrupoAdmin[]> {
       .map((m) => ({
         id: m.user_id,
         nome: m.perfis?.nome ?? "sem nome",
+        cor: m.perfis?.cor ?? "slate",
+        icone: m.perfis?.icone_avatar ?? "",
         papel: m.papel,
         entrouEm: m.entrou_em,
       }))

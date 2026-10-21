@@ -1,0 +1,424 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Catálogo de Ideologias e Revoluções</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: fichário de biblioteca. Cabeçalho tipo cartaz, depois método, trilha, linha do tempo e o fichário filtrável com nº de chamada. */
+:root{
+  --bg:#F2F3EF; --surface:#FBFBF8; --ink:#1C2127; --muted:#5B636C; --line:#D5D8D1;
+  --accent:#B07A12; --accent-ink:#7E5600; --steel:#2F5D7C; --steel-soft:#E3EBF0;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Literata",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#14171B; --surface:#1C2025; --ink:#E6E8E3; --muted:#9AA2AA; --line:#2E343A;
+  --accent:#D9A93B; --accent-ink:#E3B758; --steel:#86B6D6; --steel-soft:#1E2A33; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14171B; --surface:#1C2025; --ink:#E6E8E3; --muted:#9AA2AA; --line:#2E343A;
+  --accent:#D9A93B; --accent-ink:#E3B758; --steel:#86B6D6; --steel-soft:#1E2A33; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:1080px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.05;margin:0}
+h2{font-size:clamp(1.8rem,4vw,2.4rem);font-weight:700;text-transform:uppercase;letter-spacing:.01em}
+h3{font-size:1.25rem;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+p{margin:0}
+a{color:var(--steel)}
+.eyebrow{font-family:var(--mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink)}
+section{padding-block:48px 8px;display:grid;gap:20px}
+.lead{max-width:65ch;color:var(--muted)}
+
+/* Cabeçalho */
+header{padding-block:56px 32px;border-bottom:3px solid var(--ink);display:grid;gap:18px}
+header h1{font-size:clamp(2.6rem,9vw,5.6rem);font-weight:700;text-transform:uppercase;letter-spacing:-.005em}
+header h1 span{color:var(--accent)}
+.header-meta{display:flex;flex-wrap:wrap;gap:8px 24px;font-family:var(--mono);font-size:.8rem;color:var(--muted)}
+.header-meta b{color:var(--ink);font-weight:500}
+
+/* Método */
+.method{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.rule{background:var(--surface);border:1px solid var(--line);padding:18px;display:grid;gap:6px;align-content:start}
+.rule h3{font-size:1.1rem}
+.rule p{font-size:.95rem;color:var(--muted)}
+.trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+.trio div{background:var(--surface);padding:14px;display:grid;gap:4px;min-width:0}
+.trio .k{font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--steel)}
+.trio p{font-size:.92rem}
+@media (max-width:620px){.trio{grid-template-columns:1fr}}
+
+/* Trilha */
+.path{display:grid;gap:0;border-top:1px solid var(--line)}
+.step{display:grid;grid-template-columns:72px minmax(0,1fr) 120px;gap:16px;padding-block:16px;border-bottom:1px solid var(--line);align-items:start}
+.step .n{font-family:var(--display);font-size:2.4rem;font-weight:700;color:var(--accent);line-height:1}
+.step h3{margin-bottom:4px}
+.step p{font-size:.95rem;color:var(--muted)}
+.step p b{color:var(--ink);font-weight:600}
+.step .dur{font-family:var(--mono);font-size:.78rem;color:var(--muted);text-align:right}
+@media (max-width:620px){.step{grid-template-columns:48px minmax(0,1fr)}.step .dur{grid-column:2;text-align:left}.step .n{font-size:1.9rem}}
+
+/* Linha do tempo */
+.timeline-scroll{overflow-x:auto;border:1px solid var(--line);background:var(--surface)}
+.timeline{display:grid;grid-auto-flow:column;grid-auto-columns:170px;min-width:max-content}
+.ev{padding:14px;border-right:1px solid var(--line);display:grid;gap:6px;align-content:start}
+.ev:last-child{border-right:0}
+.ev .y{font-family:var(--mono);font-size:.95rem;font-weight:500;color:var(--steel);font-variant-numeric:tabular-nums}
+.ev p{font-size:.88rem;line-height:1.45}
+.ev .tag{font-family:var(--mono);font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+
+/* Glossário */
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:0 32px}
+.gloss dl{margin:0}
+.term{padding-block:12px;border-bottom:1px solid var(--line)}
+.term dt{font-family:var(--display);font-size:1.15rem;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.term dd{margin:2px 0 0;font-size:.93rem;color:var(--muted)}
+
+/* Controles */
+.controls{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:12px;border-bottom:1px solid var(--line);display:grid;gap:10px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin}
+.chip{flex:0 0 auto;font-family:var(--display);font-size:.95rem;font-weight:600;text-transform:uppercase;letter-spacing:.03em;
+  border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:5px 12px;cursor:pointer;border-radius:2px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,select:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.row input[type=search]{flex:1 1 220px;min-width:0;font:inherit;font-size:.95rem;padding:7px 10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:2px}
+.row select{font-family:var(--mono);font-size:.8rem;padding:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:2px}
+.row label{font-family:var(--mono);font-size:.8rem;color:var(--muted);display:flex;gap:6px;align-items:center;cursor:pointer}
+.stats{display:flex;flex-wrap:wrap;gap:4px 20px;font-family:var(--mono);font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.stats b{color:var(--ink);font-weight:500}
+
+/* Fichário */
+.drawer{display:grid;gap:32px}
+.drawer-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;border-bottom:2px solid var(--ink);padding-bottom:6px}
+.drawer-head .code{font-family:var(--mono);font-size:.85rem;color:var(--accent-ink)}
+.drawer-head p{flex-basis:100%;font-size:.93rem;color:var(--muted);max-width:70ch}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:12px}
+@media (max-width:400px){.cards{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);padding:14px 16px;display:grid;grid-template-rows:auto auto 1fr auto;gap:8px;min-width:0;position:relative}
+.card.done{opacity:.55}
+.card-top{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.callno{font-family:var(--mono);font-size:.75rem;color:var(--accent-ink);letter-spacing:.04em}
+.type{font-family:var(--mono);font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;background:var(--steel-soft);color:var(--steel);border-radius:2px;white-space:nowrap}
+.type.fic{background:transparent;border:1px solid var(--accent);color:var(--accent-ink)}
+.card h4{font-family:var(--body);font-size:1.06rem;font-weight:600;line-height:1.3;margin:0}
+.card .by{font-size:.88rem;color:var(--muted);font-style:italic}
+.card .note{font-size:.9rem;line-height:1.5}
+.facts{display:grid;grid-template-columns:repeat(3,auto);justify-content:start;gap:4px 18px;border-top:1px dashed var(--line);padding-top:8px;font-family:var(--mono);font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.facts b{display:block;color:var(--ink);font-weight:500;font-size:.85rem}
+.facts .lv{letter-spacing:.15em;color:var(--accent)}
+.read{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.72rem;color:var(--muted);cursor:pointer;justify-self:start}
+.empty{padding:40px 0;color:var(--muted);font-style:italic}
+
+footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);font-size:.85rem;color:var(--muted);display:grid;gap:6px;max-width:75ch}
+
+@media (prefers-reduced-motion:no-preference){.card{transition:opacity .2s}}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Fichário de estudo · edição out/2026</div>
+  <h1>Esquerda, direita<br>e as <span>revoluções</span></h1>
+  <p class="lead">Um catálogo para estudar capitalismo, socialismo, fascismo, nazismo, liberalismo e conservadorismo pelas revoluções que os criaram: Inglesa, Americana, Francesa, Industrial, Russa, Chinesa e Cubana, com um bloco sobre o Brasil. Cada ideia aparece com quem a defendeu e com quem a criticou.</p>
+  <div class="header-meta" id="hmeta"></div>
+</header>
+
+<section id="metodo">
+  <div class="eyebrow">Antes de abrir o primeiro livro</div>
+  <h2>Como estudar</h2>
+  <div class="trio">
+    <div><span class="k">1 · Fonte primária</span><p>O que os próprios atores escreveram: Marx, Burke, Lênin, Hayek, Mussolini. Mostra a ideia sem filtro.</p></div>
+    <div><span class="k">2 · Historiador</span><p>Quem reconstrói o contexto com documentos: Hobsbawm, Evans, Figes, Paxton. Mostra o que aconteceu de fato.</p></div>
+    <div><span class="k">3 · Crítico</span><p>Quem ataca a ideia do outro lado: Mises contra Marx, Polanyi contra o mercado livre, Arendt contra os totalitarismos.</p></div>
+  </div>
+  <div class="method">
+    <div class="rule"><h3>Comece curto</h3><p>Livros abaixo de 250 páginas primeiro. Os de 900 páginas fazem sentido depois que você já tem o mapa geral.</p></div>
+    <div class="rule"><h3>Saiba quem está falando</h3><p>Todo autor tem posição. Hobsbawm era marxista, Hayek era liberal, Kirk era conservador. Isso não invalida o livro, mas muda o que ele enfatiza.</p></div>
+    <div class="rule"><h3>Fiche cada livro</h3><p>Quatro linhas: qual a tese, em que contexto foi escrito, qual o melhor argumento e qual a crítica mais forte a ele.</p></div>
+    <div class="rule"><h3>Monte sua linha do tempo</h3><p>Ideias respondem a eventos. O fascismo só se entende depois da Primeira Guerra e do medo de 1917.</p></div>
+    <div class="rule"><h3>Teste o outro lado</h3><p>Se você não consegue explicar a posição que rejeita de um jeito que um defensor dela aceitaria, ainda não entendeu o debate.</p></div>
+    <div class="rule"><h3>Compre usado</h3><p>Estante Virtual e sebos costumam sair 40 a 60% mais barato. Textos clássicos antigos muitas vezes estão em domínio público.</p></div>
+  </div>
+</section>
+
+<section id="trilha">
+  <div class="eyebrow">Ordem sugerida</div>
+  <h2>A trilha em sete etapas</h2>
+  <div class="path" id="path"></div>
+</section>
+
+<section id="linha">
+  <div class="eyebrow">Arraste para o lado</div>
+  <h2>Linha do tempo</h2>
+  <div class="timeline-scroll"><div class="timeline" id="timeline"></div></div>
+</section>
+
+<section id="glossario">
+  <div class="eyebrow">Vocabulário mínimo</div>
+  <h2>Conceitos</h2>
+  <div class="gloss" id="gloss"></div>
+</section>
+
+<section id="catalogo">
+  <div class="eyebrow">O fichário</div>
+  <h2>Catálogo de livros</h2>
+  <p class="lead">Páginas e preços são aproximados: variam conforme a edição. Preço de referência é o de livro novo no Brasil; usado sai bem mais barato. Marque o que você já leu, fica salvo neste navegador.</p>
+  <div class="controls">
+    <div class="chips" id="chips" role="group" aria-label="Filtrar por tema"></div>
+    <div class="row">
+      <input type="search" id="q" placeholder="Buscar título, autor ou assunto" aria-label="Buscar">
+      <select id="lv" aria-label="Nível"><option value="0">Todos os níveis</option><option value="1">Iniciante</option><option value="2">Intermediário</option><option value="3">Avançado</option></select>
+      <select id="tp" aria-label="Tipo"><option value="">Todos os tipos</option></select>
+      <label><input type="checkbox" id="hide"> Esconder lidos</label>
+    </div>
+    <div class="stats" id="stats"></div>
+  </div>
+  <div class="drawer" id="drawer"></div>
+</section>
+
+<footer>
+  <p>Preços estimados para outubro de 2026 em livrarias online brasileiras, arredondados. Editoras indicadas são as edições mais comuns em português; confira antes de comprar.</p>
+  <p>Este catálogo reúne autores de esquerda, direita, liberais e conservadores de propósito. Ler um livro não é concordar com ele.</p>
+</footer>
+</div>
+
+<script>
+const THEMES = [
+ ["base","GER","Mapa geral e conceitos","Comece aqui. Dão o vocabulário e o panorama de três séculos antes de mergulhar em cada tema."],
+ ["lib","LIB","Revoluções liberais e o nascimento do capitalismo","Revolução Inglesa, Independência americana e Revolução Industrial: de onde vêm a propriedade privada moderna, o governo por consentimento e a fábrica."],
+ ["rf","RFR","Revolução Francesa","1789 inventou o vocabulário político moderno, inclusive as palavras esquerda e direita."],
+ ["cap","CAP","Capitalismo e liberalismo econômico","Os defensores do mercado e os críticos dele, em diálogo."],
+ ["soc","SOC","Socialismo, marxismo e anarquismo","Das fontes originais aos debates internos da esquerda e às críticas liberais."],
+ ["rr","RUS","Revolução Russa e União Soviética","1917, Lênin, Stálin, o Gulag. Inclui relatos simpáticos e críticos."],
+ ["rsoc","REV","China, Cuba e outras revoluções socialistas","Mao, a Grande Fome, Fidel e Che."],
+ ["fas","FAS","Fascismo","Itália de Mussolini, o conceito de totalitarismo e o debate sobre o que é, afinal, fascismo."],
+ ["naz","NAZ","Nazismo e Holocausto","A ascensão de Hitler, o Estado nazista e os relatos de quem sobreviveu."],
+ ["dir","DIR","Conservadorismo e liberalismo político","O pensamento de direita e liberal escrito pelos próprios autores."],
+ ["cont","XX","Guerra Fria e o mundo de hoje","Do pós-guerra à crise das democracias."],
+ ["br","BRA","Brasil","Como esses debates chegaram aqui: integralismo, Vargas, ditadura, luta armada, liberalismo."]
+];
+
+// [tema, título, autor, ano, editora, páginas, preço R$, nível 1-3, tipo, nota]
+const B = [
+["base","Direita e Esquerda","Norberto Bobbio",1994,"Unesp",190,55,1,"Ensaio","O melhor ponto de partida. Mostra que a divisão central é a atitude diante da igualdade, sem tomar partido."],
+["base","Ideologias Políticas, vol. 1","Andrew Heywood",2003,"Ática",250,110,1,"Manual","Manual universitário com um capítulo para cada ideologia: liberalismo, conservadorismo, socialismo, anarquismo, nacionalismo, fascismo."],
+["base","A História do Pensamento Econômico","Robert Heilbroner",1953,"Nova Cultural",330,60,1,"História","Smith, Marx, Keynes e Schumpeter contados como personagens. A porta de entrada mais leve para economia política."],
+["base","A Era das Revoluções (1789–1848)","Eric Hobsbawm",1962,"Paz e Terra",530,85,2,"História","Revolução Francesa e Industrial como uma 'dupla revolução'. Autor marxista; clássico do tema."],
+["base","A Era dos Extremos (1914–1991)","Eric Hobsbawm",1994,"Companhia das Letras",600,95,2,"História","O século XX inteiro: guerras mundiais, fascismo, URSS, Guerra Fria."],
+["base","História da Riqueza do Homem","Leo Huberman",1936,"LTC",300,70,1,"História","Do feudalismo ao capitalismo em linguagem simples. Escrito de um ponto de vista socialista."],
+
+["lib","Segundo Tratado sobre o Governo Civil","John Locke",1689,"Edipro / Vozes",200,40,2,"Fonte primária","Propriedade, consentimento e direito de resistência. Base do liberalismo político."],
+["lib","O Mundo de Ponta-Cabeça","Christopher Hill",1972,"Companhia das Letras",480,95,3,"História","A Revolução Inglesa do século XVII vista pelos radicais de baixo."],
+["lib","As Origens Ideológicas da Revolução Americana","Bernard Bailyn",1967,"Edusc",340,80,3,"História","Que ideias moveram os colonos americanos contra a Coroa."],
+["lib","O Federalista","Hamilton, Madison e Jay",1788,"Faro / Nova Fronteira",600,90,3,"Fonte primária","Os artigos que defenderam a Constituição americana: separação de poderes e freios e contrapesos."],
+["lib","A Ética Protestante e o 'Espírito' do Capitalismo","Max Weber",1905,"Companhia das Letras",330,70,2,"Ensaio","Tese de que a mentalidade religiosa ajudou a criar o capitalismo moderno."],
+["lib","Da Revolução Industrial Inglesa ao Imperialismo","Eric Hobsbawm",1968,"Forense Universitária",330,80,2,"História","Como a Inglaterra virou a primeira economia industrial e o que isso fez com a classe trabalhadora."],
+["lib","A Grande Transformação","Karl Polanyi",1944,"Contraponto",400,90,3,"Ensaio","Argumenta que o mercado livre foi construído pelo Estado e que a sociedade reagiu a ele. Crítica clássica ao liberalismo econômico."],
+
+["rf","A Revolução Francesa (1789–1799)","Michel Vovelle",1985,"Unesp",170,50,1,"História","Síntese curta e clara dos dez anos de Revolução."],
+["rf","Declaração dos Direitos do Homem e do Cidadão","Assembleia Nacional",1789,"Gratuito online",4,0,1,"Fonte primária","Duas páginas. Leia antes de tudo; é o documento que os outros livros vão discutir."],
+["rf","A Constituinte Burguesa (O que é o Terceiro Estado?)","Emmanuel Sieyès",1789,"Lumen Juris",140,50,2,"Fonte primária","O panfleto que incendiou 1789: o povo comum é a nação."],
+["rf","Reflexões sobre a Revolução na França","Edmund Burke",1790,"Edipro / Vide",260,60,2,"Fonte primária","Escrito durante os acontecimentos. Texto fundador do conservadorismo moderno."],
+["rf","O Antigo Regime e a Revolução","Alexis de Tocqueville",1856,"Edipro / Martins Fontes",300,60,2,"Ensaio","Visão liberal: a Revolução continuou a centralização que a monarquia já fazia."],
+["rf","Cidadãos: uma crônica da Revolução Francesa","Simon Schama",1989,"Companhia das Letras",900,130,3,"História","Narrativa longa, muito crítica ao Terror. Contraponto à leitura marxista de Hobsbawm."],
+["rf","Um Conto de Duas Cidades","Charles Dickens",1859,"Penguin-Companhia",500,60,1,"Ficção","Londres e Paris durante a Revolução. Bom para sentir o clima da época."],
+["rf","Os Miseráveis","Victor Hugo",1862,"Penguin-Companhia (2 vols.)",1500,150,2,"Ficção","A França pós-revolucionária e a insurreição de 1832."],
+
+["cap","A Riqueza das Nações","Adam Smith",1776,"Edipro (2 vols.)",1000,140,3,"Fonte primária","O livro fundador da economia. Comece pelos livros I e IV."],
+["cap","As Seis Lições","Ludwig von Mises",1979,"LVM",110,30,1,"Ensaio","Palestras curtas da Escola Austríaca sobre mercado, inflação e intervenção."],
+["cap","Capitalismo e Liberdade","Milton Friedman",1962,"LTC",250,60,1,"Ensaio","Defesa de que liberdade econômica é condição para liberdade política."],
+["cap","O Caminho da Servidão","Friedrich Hayek",1944,"LVM",260,50,2,"Ensaio","Argumento liberal de que o planejamento central leva ao autoritarismo."],
+["cap","Economia Básica","Thomas Sowell",2000,"Alta Books",700,110,1,"Manual","Economia sem fórmulas, de um ponto de vista pró-mercado."],
+["cap","23 Coisas que Não Nos Contaram sobre o Capitalismo","Ha-Joon Chang",2010,"Cultrix",340,60,1,"Ensaio","Crítica heterodoxa ao livre mercado. Leia junto com Sowell para ver os dois lados."],
+["cap","Teoria Geral do Emprego, do Juro e da Moeda","John Maynard Keynes",1936,"Saraiva",400,90,3,"Fonte primária","Base do Estado de bem-estar e da intervenção do governo na economia."],
+["cap","Capitalismo, Socialismo e Democracia","Joseph Schumpeter",1942,"Unesp",600,110,3,"Ensaio","Destruição criativa e a previsão de que o capitalismo seria superado pelo próprio sucesso."],
+["cap","O Capital no Século XXI","Thomas Piketty",2013,"Intrínseca",670,100,2,"Ensaio","Desigualdade de renda e patrimônio em dados de 300 anos."],
+
+["soc","Manifesto do Partido Comunista","Karl Marx e Friedrich Engels",1848,"Boitempo",80,30,1,"Fonte primária","Curto e direto. O texto mais influente da história do socialismo."],
+["soc","Do Socialismo Utópico ao Socialismo Científico","Friedrich Engels",1880,"Edipro",100,30,1,"Fonte primária","O próprio Engels explica o marxismo de forma didática."],
+["soc","O 18 de Brumário de Luís Bonaparte","Karl Marx",1852,"Boitempo",180,45,2,"Fonte primária","Análise de um golpe de Estado na França. Mostra o método de Marx aplicado a um caso real."],
+["soc","Para Entender O Capital, Livro I","David Harvey",2010,"Boitempo",360,80,2,"Manual","Guia capítulo a capítulo. Leia antes ou junto com O Capital."],
+["soc","O Capital, Livro I","Karl Marx",1867,"Boitempo",900,130,3,"Fonte primária","Denso. Só depois de ter o mapa geral."],
+["soc","Rumo à Estação Finlândia","Edmund Wilson",1940,"Companhia de Bolso",600,70,2,"História","A história das ideias socialistas, de Michelet até Lênin chegando a Petrogrado."],
+["soc","Reforma ou Revolução?","Rosa Luxemburgo",1899,"Expressão Popular",130,25,2,"Fonte primária","O debate que separou social-democratas de revolucionários."],
+["soc","A Conquista do Pão","Piotr Kropotkin",1892,"Hedra",250,50,2,"Fonte primária","O anarquismo comunista: socialismo sem Estado."],
+["soc","Socialismo: uma análise econômica e sociológica","Ludwig von Mises",1922,"LVM",600,90,3,"Ensaio","A crítica liberal clássica: sem preços de mercado, uma economia planificada não consegue calcular."],
+
+["rr","A Revolução Russa","Sheila Fitzpatrick",1982,"Todavia",250,70,1,"História","A introdução mais usada em universidades. Vai de 1917 ao fim dos anos 1930."],
+["rr","A Revolução que Mudou o Mundo: Rússia, 1917","Daniel Aarão Reis",2017,"Companhia das Letras",300,70,1,"História","De um historiador brasileiro, escrito no centenário."],
+["rr","Dez Dias que Abalaram o Mundo","John Reed",1919,"Penguin-Companhia",470,70,1,"Fonte primária","Reportagem de dentro de Petrogrado, por um jornalista americano simpático aos bolcheviques."],
+["rr","O Estado e a Revolução","Vladimir Lênin",1917,"Boitempo",180,40,2,"Fonte primária","Escrito meses antes da tomada do poder. Mostra o que Lênin dizia querer fazer."],
+["rr","A Tragédia de um Povo","Orlando Figes",1996,"Record",1000,140,3,"História","A obra de referência sobre 1891–1924. Crítica aos bolcheviques, com muitos relatos pessoais."],
+["rr","História da Revolução Russa","Leon Trótski",1930,"Sundermann (2 vols.)",900,120,3,"Fonte primária","A versão de um dos líderes da Revolução, escrita no exílio."],
+["rr","Gulag: uma história","Anne Applebaum",2003,"Ediouro",700,100,2,"História","O sistema de campos de trabalho forçado soviético, documentado."],
+["rr","Arquipélago Gulag","Aleksandr Soljenítsin",1973,"Carambaia (3 vols.)",1500,280,3,"Memória","Relato e investigação de um ex-prisioneiro. Livro que mudou a visão do Ocidente sobre a URSS."],
+["rr","A Revolução dos Bichos","George Orwell",1945,"Várias editoras",150,30,1,"Ficção","Fábula sobre como uma revolução vira tirania. Orwell era socialista e antistalinista."],
+["rr","O Zero e o Infinito","Arthur Koestler",1940,"Amarilys",270,60,2,"Ficção","Um velho bolchevique preso nos Processos de Moscou."],
+["rr","Vida e Destino","Vassili Grossman",1959,"Alfaguara",900,130,3,"Ficção","Stalingrado e a comparação entre os dois totalitarismos. Proibido na URSS."],
+
+["rsoc","A Grande Fome de Mao","Frank Dikötter",2010,"Record",500,90,2,"História","O Grande Salto Adiante (1958–62) e a fome que matou dezenas de milhões."],
+["rsoc","Cisnes Selvagens","Jung Chang",1991,"Companhia das Letras",600,80,1,"Memória","Três gerações de mulheres de uma família chinesa, do império à Revolução Cultural."],
+["rsoc","Cuba: uma nova história","Richard Gott",2004,"Zahar",400,90,2,"História","Da colonização a Fidel, com atenção ao contexto da relação com os EUA."],
+["rsoc","Che Guevara: uma biografia","Jon Lee Anderson",1997,"Objetiva",1000,130,2,"Biografia","A biografia de referência. Nem hagiografia nem ataque."],
+
+["fas","O Fascismo Eterno","Umberto Eco",1995,"Record",60,30,1,"Ensaio","Ensaio curto com 14 características recorrentes do fascismo."],
+["fas","Introdução ao Fascismo","Leandro Konder",1977,"Expressão Popular",180,30,1,"Ensaio","Introdução brasileira de perspectiva marxista."],
+["fas","A Doutrina do Fascismo","Benito Mussolini e Giovanni Gentile",1932,"Acervos acadêmicos online",40,0,2,"Fonte primária","O texto oficial do regime. Leia para ver como o fascismo se definia."],
+["fas","A Anatomia do Fascismo","Robert Paxton",2004,"Paz e Terra",420,90,2,"História","A melhor obra geral: o fascismo pelo que fez, em cinco etapas, não pelo que dizia."],
+["fas","Origens do Totalitarismo","Hannah Arendt",1951,"Companhia das Letras",830,120,3,"Ensaio","Antissemitismo, imperialismo e totalitarismo. Compara nazismo e stalinismo."],
+["fas","M, o Filho do Século","Antonio Scurati",2018,"Intrínseca",800,100,2,"Ficção","Romance documental sobre a subida de Mussolini ao poder."],
+
+["naz","História de um Alemão","Sebastian Haffner",2000,"Objetiva",300,60,1,"Memória","Um jovem alemão comum vendo o nazismo chegar, de 1914 a 1933."],
+["naz","O Diário de Anne Frank","Anne Frank",1947,"Record",350,40,1,"Memória","Escondida em Amsterdã, 1942–44."],
+["naz","É Isto um Homem?","Primo Levi",1947,"Rocco",250,50,1,"Memória","Auschwitz por um sobrevivente químico italiano."],
+["naz","Em Busca de Sentido","Viktor Frankl",1946,"Vozes",180,40,1,"Memória","Psiquiatra sobrevivente dos campos."],
+["naz","A Chegada do Terceiro Reich","Richard J. Evans",2003,"Planeta",700,110,2,"História","Volume 1 da trilogia de referência: como a República de Weimar caiu."],
+["naz","O Terceiro Reich no Poder","Richard J. Evans",2005,"Planeta",900,120,3,"História","Volume 2: o funcionamento do Estado nazista, 1933–39."],
+["naz","O Terceiro Reich em Guerra","Richard J. Evans",2008,"Planeta",1000,130,3,"História","Volume 3: a guerra e o Holocausto."],
+["naz","Hitler","Ian Kershaw",2008,"Companhia das Letras",1100,150,3,"Biografia","A biografia de referência, em versão de um volume."],
+["naz","Eichmann em Jerusalém","Hannah Arendt",1963,"Companhia das Letras",340,70,2,"Ensaio","O julgamento de um burocrata do Holocausto e a ideia de banalidade do mal."],
+["naz","Terras de Sangue","Timothy Snyder",2010,"Record",560,100,2,"História","Polônia, Ucrânia e Bielorrússia entre Hitler e Stálin, 1933–45."],
+
+["dir","Como Ser um Conservador","Roger Scruton",2014,"Record",300,70,1,"Ensaio","O conservadorismo explicado por um conservador, de forma acessível."],
+["dir","Quatro Ensaios sobre a Liberdade","Isaiah Berlin",1969,"UnB",300,60,2,"Ensaio","A distinção entre liberdade negativa e positiva, central no debate entre liberais e socialistas."],
+["dir","O Ópio dos Intelectuais","Raymond Aron",1955,"Três Estrelas",350,80,2,"Ensaio","Um liberal francês critica a atração de intelectuais pelo comunismo."],
+["dir","A Mentalidade Conservadora","Russell Kirk",1953,"É Realizações",600,120,3,"História","A tradição conservadora de Burke a T.S. Eliot."],
+["dir","A Revolta de Atlas","Ayn Rand",1957,"Arqueiro",1200,130,2,"Ficção","Romance libertário que defende o individualismo e o capitalismo radical."],
+
+["cont","História da Guerra Fria","John Lewis Gaddis",2005,"Nova Fronteira",330,70,1,"História","Introdução curta e clara a 1945–1991."],
+["cont","Pós-Guerra: uma história da Europa desde 1945","Tony Judt",2005,"Objetiva",850,130,2,"História","Reconstrução, Estado de bem-estar, bloco soviético e queda do Muro."],
+["cont","O Mal Ronda a Terra","Tony Judt",2010,"Objetiva",220,55,1,"Ensaio","Defesa da social-democracia, a esquerda que aceitou o mercado."],
+["cont","O Fim da História e o Último Homem","Francis Fukuyama",1992,"Rocco",490,80,2,"Ensaio","A tese de que a democracia liberal venceu o debate ideológico. Muito citado, muito criticado."],
+["cont","Como as Democracias Morrem","Steven Levitsky e Daniel Ziblatt",2018,"Zahar",270,65,1,"Ensaio","Como democracias se desfazem por dentro, sem golpe clássico."],
+["cont","O Crepúsculo da Democracia","Anne Applebaum",2020,"Record",200,55,1,"Ensaio","Ensaio pessoal sobre a virada autoritária de parte da direita europeia e americana."],
+["cont","1984","George Orwell",1949,"Companhia das Letras",400,50,1,"Ficção","O retrato definitivo do Estado totalitário."],
+
+["br","História Concisa do Brasil","Boris Fausto",2001,"Edusp",330,60,1,"História","O panorama do Brasil em um volume curto."],
+["br","Brasil: uma Biografia","Lilia Schwarcz e Heloisa Starling",2015,"Companhia das Letras",800,110,2,"História","Da colônia à Nova República."],
+["br","Formação do Brasil Contemporâneo","Caio Prado Jr.",1942,"Companhia das Letras",440,70,3,"História","Interpretação marxista clássica da economia colonial."],
+["br","Integralismo: o fascismo brasileiro na década de 30","Hélgio Trindade",1974,"Difel",370,70,3,"História","O movimento de Plínio Salgado, o maior fascismo fora da Europa."],
+["br","A Ditadura Envergonhada","Elio Gaspari",2002,"Intrínseca",420,70,2,"História","Primeiro volume da série sobre a ditadura militar, de 1964 a 1968."],
+["br","Combate nas Trevas","Jacob Gorender",1987,"Expressão Popular",300,60,2,"História","A esquerda e a luta armada contra a ditadura, por um ex-militante."],
+["br","A Lanterna na Popa","Roberto Campos",1994,"Topbooks",1400,180,3,"Memória","Memórias de um economista liberal que foi ministro. Visão de dentro do governo."]
+];
+
+const PATH = [
+ ["O mapa","Vocabulário e panorama. <b>Bobbio</b>, <b>Heywood</b> e <b>Heilbroner</b>. Leia também o glossário abaixo.","2–3 semanas"],
+ ["As revoluções liberais","Como surgem propriedade privada moderna, direitos e capitalismo industrial. <b>Locke</b>, <b>Huberman</b>, <b>Weber</b>.","3–4 semanas"],
+ ["A Revolução Francesa","De onde vêm esquerda e direita. <b>Declaração de 1789</b>, <b>Vovelle</b>, depois <b>Burke</b> contra <b>Hobsbawm</b>.","3–4 semanas"],
+ ["Mercado contra planejamento","O grande debate econômico. <b>Manifesto</b> e <b>Engels</b>; depois <b>Mises</b> (Seis Lições) e <b>Hayek</b>; para fechar, <b>Chang</b> e <b>Sowell</b>.","4–6 semanas"],
+ ["1917 e o socialismo real","<b>Fitzpatrick</b> ou <b>Aarão Reis</b>, depois <b>Lênin</b> e <b>John Reed</b>, depois <b>Orwell</b> e <b>Applebaum</b>.","4–6 semanas"],
+ ["Fascismo e nazismo","<b>Eco</b>, <b>Haffner</b>, <b>Paxton</b>; depois <b>Primo Levi</b> e <b>Evans</b>. <b>Arendt</b> fecha comparando os totalitarismos.","6–8 semanas"],
+ ["Guerra Fria, hoje e Brasil","<b>Gaddis</b>, <b>Judt</b>, <b>Fausto</b>, <b>Gaspari</b>. Aqui você já consegue ler os livros grandes do catálogo.","contínuo"]
+];
+
+const TL = [
+ ["1642–1689","Revolução Inglesa e Gloriosa: o Parlamento limita o rei.","Liberal"],
+ ["1689","Locke publica o Segundo Tratado.","Ideia"],
+ ["1760–1840","Revolução Industrial na Inglaterra.","Capitalismo"],
+ ["1776","Independência dos EUA. Adam Smith publica A Riqueza das Nações.","Liberal"],
+ ["1789","Revolução Francesa. Na Assembleia, quem defendia o rei sentava à direita; quem queria mudanças, à esquerda.","Origem dos termos"],
+ ["1790","Burke escreve contra a Revolução: nasce o conservadorismo moderno.","Ideia"],
+ ["1848","Manifesto Comunista. Revoluções em quase toda a Europa.","Socialismo"],
+ ["1867","Marx publica O Capital, Livro I.","Ideia"],
+ ["1871","Comuna de Paris, primeiro governo operário (dura 72 dias).","Socialismo"],
+ ["1914–1918","Primeira Guerra Mundial.","Guerra"],
+ ["1917","Revolução Russa: em outubro, os bolcheviques tomam o poder.","Socialismo"],
+ ["1922","Marcha sobre Roma: Mussolini chega ao poder.","Fascismo"],
+ ["1929","Quebra da Bolsa de Nova York e Grande Depressão.","Capitalismo"],
+ ["1933","Hitler vira chanceler da Alemanha.","Nazismo"],
+ ["1936–1938","Grande Terror de Stálin.","URSS"],
+ ["1939–1945","Segunda Guerra Mundial e Holocausto.","Guerra"],
+ ["1949","Revolução Chinesa: Mao proclama a República Popular.","Socialismo"],
+ ["1959","Revolução Cubana.","Socialismo"],
+ ["1964","Golpe militar no Brasil.","Brasil"],
+ ["1989","Queda do Muro de Berlim.","Guerra Fria"],
+ ["1991","Fim da União Soviética.","Guerra Fria"],
+ ["2008","Crise financeira global reabre o debate sobre o capitalismo.","Hoje"]
+];
+
+const GL = [
+ ["Esquerda","Em geral, prioriza a igualdade e aceita usar o Estado para reduzir desigualdades. Vai da social-democracia ao comunismo."],
+ ["Direita","Em geral, aceita desigualdades como naturais ou necessárias e prioriza ordem, tradição ou liberdade individual. Vai do liberalismo econômico ao conservadorismo e, no extremo, ao fascismo."],
+ ["Capitalismo","Sistema econômico com propriedade privada dos meios de produção, trabalho assalariado e mercados que definem preços."],
+ ["Liberalismo","Defesa das liberdades individuais e de limites ao poder do Estado. O liberalismo econômico defende o livre mercado; no uso americano, 'liberal' quer dizer centro-esquerda."],
+ ["Conservadorismo","Desconfiança de mudanças bruscas e valorização de instituições e tradições que já funcionam."],
+ ["Socialismo","Propriedade coletiva ou estatal dos meios de produção, ou forte controle social sobre eles. Tem versões democráticas e revolucionárias."],
+ ["Comunismo","Para Marx, a sociedade sem classes e sem Estado que viria depois do socialismo. Na prática, nome dos regimes de partido único inspirados em 1917."],
+ ["Social-democracia","Mantém mercado e democracia, mas com Estado de bem-estar forte: saúde, educação e previdência públicas, impostos progressivos."],
+ ["Anarquismo","Rejeita o Estado e qualquer autoridade imposta. Teve vertentes de esquerda (Kropotkin) e, depois, libertárias de mercado."],
+ ["Fascismo","Nacionalismo extremo, partido único, culto ao líder, violência política e mobilização de massas contra o liberalismo e o comunismo. Itália, 1922."],
+ ["Nazismo","O fascismo alemão, com o racismo e o antissemitismo como centro. Levou ao Holocausto."],
+ ["Totalitarismo","Regime que tenta controlar todos os aspectos da vida. Conceito usado para comparar nazismo e stalinismo."],
+ ["Autoritarismo","Regime sem eleições livres ou com poder concentrado, mas sem a ambição de controle total do totalitarismo."]
+];
+
+// ---------- render estático
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmtP = n => n===0 ? "grátis" : "R$ " + n;
+const totalPg = B.reduce((a,b)=>a+b[5],0);
+$("#hmeta").innerHTML = `<span><b>${B.length}</b> livros</span><span><b>${THEMES.length}</b> temas</span><span><b>${totalPg.toLocaleString("pt-BR")}</b> páginas no total</span><span>Esquerda, direita e centro</span>`;
+$("#path").innerHTML = PATH.map((p,i)=>`<div class="step"><div class="n">${i+1}</div><div><h3>${p[0]}</h3><p>${p[1]}</p></div><div class="dur">${p[2]}</div></div>`).join("");
+$("#timeline").innerHTML = TL.map(t=>`<div class="ev"><span class="y">${t[0]}</span><p>${t[1]}</p><span class="tag">${t[2]}</span></div>`).join("");
+const half = Math.ceil(GL.length/2);
+const glHtml = arr => `<dl>${arr.map(g=>`<div class="term"><dt>${g[0]}</dt><dd>${g[1]}</dd></div>`).join("")}</dl>`;
+$("#gloss").innerHTML = glHtml(GL.slice(0,half)) + glHtml(GL.slice(half));
+
+const types = [...new Set(B.map(b=>b[8]))].sort();
+$("#tp").innerHTML += types.map(t=>`<option>${t}</option>`).join("");
+
+// call numbers
+const counters = {};
+B.forEach(b=>{const th=THEMES.find(t=>t[0]===b[0]);counters[b[0]]=(counters[b[0]]||0)+1;b.call=`${th[1]}-${String(counters[b[0]]).padStart(2,"0")}`;});
+
+// ---------- estado
+let read = {};
+try{ read = JSON.parse(localStorage.getItem("lidos")||"{}"); }catch(e){ read = {}; }
+const save = ()=>{ try{ localStorage.setItem("lidos",JSON.stringify(read)); }catch(e){} };
+let activeTheme = "all";
+const SHORT = {base:"Mapa geral",lib:"Rev. liberais",rf:"Rev. Francesa",cap:"Capitalismo",soc:"Socialismo",rr:"Rev. Russa",rsoc:"China e Cuba",fas:"Fascismo",naz:"Nazismo",dir:"Conservadorismo",cont:"Guerra Fria e hoje",br:"Brasil"};
+
+$("#chips").innerHTML = `<button class="chip" data-t="all" aria-pressed="true">Todos</button>` +
+  THEMES.map(t=>`<button class="chip" data-t="${t[0]}" aria-pressed="false">${SHORT[t[0]]}</button>`).join("");
+$("#chips").addEventListener("click",e=>{
+  const b=e.target.closest(".chip"); if(!b) return;
+  activeTheme=b.dataset.t;
+  document.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",c===b));
+  render();
+});
+["#q","#lv","#tp","#hide"].forEach(id=>$(id).addEventListener("input",render));
+
+function render(){
+  const q=$("#q").value.trim().toLowerCase(), lv=+$("#lv").value, tp=$("#tp").value, hide=$("#hide").checked;
+  const list=B.filter(b=>(activeTheme==="all"||b[0]===activeTheme)&&(!lv||b[7]===lv)&&(!tp||b[8]===tp)&&(!hide||!read[b.call])&&
+    (!q||(b[1]+" "+b[2]+" "+b[9]+" "+b[4]).toLowerCase().includes(q)));
+  const pg=list.reduce((a,b)=>a+b[5],0), pr=list.reduce((a,b)=>a+b[6],0), done=B.filter(b=>read[b.call]).length;
+  $("#stats").innerHTML=`<span><b>${list.length}</b> livros na seleção</span><span><b>~${pg.toLocaleString("pt-BR")}</b> páginas</span><span><b>~R$ ${pr.toLocaleString("pt-BR")}</b> se comprar tudo novo</span><span><b>${done}</b> de ${B.length} lidos</span>`;
+  if(!list.length){ $("#drawer").innerHTML=`<p class="empty">Nenhum livro com esses filtros. Tente limpar a busca ou mudar o nível.</p>`; return; }
+  $("#drawer").innerHTML = THEMES.filter(t=>list.some(b=>b[0]===t[0])).map(t=>{
+    const items=list.filter(b=>b[0]===t[0]);
+    return `<div><div class="drawer-head"><span class="code">${t[1]}</span><h3>${t[2]}</h3><p>${t[3]}</p></div><div class="cards">${
+      items.map(b=>`<article class="card${read[b.call]?" done":""}">
+        <div class="card-top"><span class="callno">${b.call}</span><span class="type${b[8]==="Ficção"?" fic":""}">${b[8]}</span></div>
+        <div><h4>${esc(b[1])}</h4><div class="by">${esc(b[2])}, ${b[3]}</div></div>
+        <p class="note">${esc(b[9])}</p>
+        <div style="display:grid;gap:8px">
+          <div class="facts"><span><b>~${b[5].toLocaleString("pt-BR")}</b>páginas</span><span><b>${b[6]?"~":""}${fmtP(b[6])}</b>${esc(b[4])}</span><span><b class="lv">${"●".repeat(b[7])}${"○".repeat(3-b[7])}</b>${["","iniciante","intermediário","avançado"][b[7]]}</span></div>
+          <label class="read"><input type="checkbox" id="r-${b.call}" data-c="${b.call}" ${read[b.call]?"checked":""}> já li</label>
+        </div></article>`).join("")}</div></div>`;
+  }).join("");
+}
+$("#drawer").addEventListener("change",e=>{
+  const c=e.target.dataset.c; if(!c) return;
+  if(e.target.checked) read[c]=1; else delete read[c];
+  save(); render();
+});
+render();
+</script>
+
+</body></html>

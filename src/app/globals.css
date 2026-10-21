@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/*
+ * Tela grande de verdade (largura E altura): aqui telas como o perfil cabem inteiras,
+ * sem rolar a página. Em telas médias ou baixas, a página rola normalmente.
+ */
+@custom-variant tela-grande (@media (min-width: 1024px) and (min-height: 820px));
+
 /* Tokens do design system (CLAUDE.md). Cor solta só aqui, nunca em componente. */
 :root {
   color-scheme: light;
@@ -18,6 +24,18 @@
   --accent-soft: #ece4fd;
   --ok: #1f8a5b;
   --err: #c81e1e;
+
+  /* cores que a pessoa escolhe para o próprio avatar (texto branco por cima: contraste ≥ 4.5:1) */
+  --perfil-blue: #2563eb;
+  --perfil-red: #dc2626;
+  --perfil-purple: #9333ea;
+  --perfil-slate: #475569;
+  --perfil-green: #15803d;
+  --perfil-orange: #c2410c;
+  --perfil-pink: #be185d;
+  --perfil-teal: #0f766e;
+  --perfil-amber: #b45309;
+  --perfil-indigo: #4f46e5;
 
   /* alturas das barras fixas, usadas no scroll-padding (WCAG 2.4.11) */
   --toph: 67px;
@@ -80,13 +98,23 @@
 
 @media (min-width: 760px) {
   :root {
-    --toph: 115px;
+    --toph: 119px;
     --navh: 0px;
   }
 }
 
 @theme inline {
   --color-blue: var(--blue);
+  --color-perfil-blue: var(--perfil-blue);
+  --color-perfil-red: var(--perfil-red);
+  --color-perfil-purple: var(--perfil-purple);
+  --color-perfil-slate: var(--perfil-slate);
+  --color-perfil-green: var(--perfil-green);
+  --color-perfil-orange: var(--perfil-orange);
+  --color-perfil-pink: var(--perfil-pink);
+  --color-perfil-teal: var(--perfil-teal);
+  --color-perfil-amber: var(--perfil-amber);
+  --color-perfil-indigo: var(--perfil-indigo);
   --color-red: var(--red);
   --color-purple: var(--purple);
   --color-bg: var(--bg);
@@ -250,5 +278,16 @@ textarea {
 @keyframes flutuar {
   50% {
     transform: translateY(-6px);
+  }
+}
+@keyframes navegacao-progresso {
+  0% {
+    transform: translateX(-110%);
+  }
+  55% {
+    transform: translateX(190%);
+  }
+  100% {
+    transform: translateX(420%);
   }
 }

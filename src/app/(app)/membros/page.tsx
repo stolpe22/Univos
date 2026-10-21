@@ -42,21 +42,35 @@ export default async function MembrosPage() {
           Ninguém no grupo ainda. Gere um convite abaixo e mande pro pessoal.
         </p>
       ) : (
-        <ul className="m-0 grid list-none gap-3.5 p-0 md:grid-cols-3">
+        <ul className="m-0 grid list-none gap-3.5 p-0 sm:grid-cols-2 xl:grid-cols-3">
           {ordenadas.map((p) => {
             const sugestoes = livros.filter((l) => l.sugeridoPor === p.id).length;
             const presencas = debates.filter((d) => d.presencas.some((x) => x.id === p.id)).length;
+            const adquiridos = livros.filter((l) =>
+              l.leituras.some((x) => x.userId === p.id && x.temEdicao),
+            ).length;
             return (
               <li key={p.id} id={`pessoa-${p.id}`} className="animate-rise scroll-mt-28">
                 <Link
                   href={`/membros/${p.id}`}
                   className="block h-full rounded-2xl border border-line bg-card p-4 md:p-[18px] [@media(hover:hover)]:hover:border-accent"
                 >
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Avatar nome={p.nome} cor={p.cor} />
-                    <h2 className="m-0 text-lg font-bold">{p.nome}</h2>
-                    {p.id === clube.uid && <Pill>você</Pill>}
-                    {p.papel === "moderador" && <Pill>moderador</Pill>}
+                  <div className="flex min-w-0 items-start gap-3">
+                    <Avatar
+                      nome={p.nome}
+                      cor={p.cor}
+                      icone={p.icone || null}
+                      className="size-11 text-base"
+                    />
+                    <div className="grid min-w-0 flex-1 gap-2">
+                      <h2 className="m-0 break-words text-lg font-bold">{p.nome}</h2>
+                      {(p.id === clube.uid || p.papel === "moderador") && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {p.id === clube.uid && <Pill>você</Pill>}
+                          {p.papel === "moderador" && <Pill>moderador</Pill>}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <p className="mt-2.5 mb-1.5">
                     {p.resultado ? (
@@ -66,7 +80,8 @@ export default async function MembrosPage() {
                     )}
                   </p>
                   <p className="m-0 text-muted">
-                    💡 {sugestoes} {sugestoes === 1 ? "sugestão" : "sugestões"} · 🎤 {presencas}{" "}
+                    💡 {sugestoes} {sugestoes === 1 ? "sugestão" : "sugestões"} · 📚 {adquiridos}{" "}
+                    {adquiridos === 1 ? "adquirido" : "adquiridos"} · 🎤 {presencas}{" "}
                     {presencas === 1 ? "debate" : "debates"}
                   </p>
                   <p className="mt-2 mb-0 text-sm font-semibold text-accent">Ver perfil →</p>
